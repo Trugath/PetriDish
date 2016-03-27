@@ -87,10 +87,10 @@ object ThreeBitAdder {
           .mkString
           .decodeOption[Program]
       } else None) match {
-        case Some(program) if program.data.length < 4 => program.spread(8).grow(32)
-        case Some(program) if program.data.length < 8 => program.spread(4).grow(32)
-        case Some(program) if program.data.length < 16 => program.spread(2).grow(32)
-        case Some(program) => program.grow(32)
+        case Some(program: Program) if program.data.length < 4 => program.spread(8).grow(32)
+        case Some(program: Program) if program.data.length < 8 => program.spread(4).grow(32)
+        case Some(program: Program) if program.data.length < 16 => program.spread(2).grow(32)
+        case Some(program: Program) => program.grow(32)
         case None => Generator(Nop.instructionSize, 32, 3, 2)
       }
     }

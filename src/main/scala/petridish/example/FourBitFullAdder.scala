@@ -89,10 +89,10 @@ object FourBitFullAdder {
           .mkString
           .decodeOption[Program]
       } else None) match {
-        case Some(program) if program.data.length < 32 => program.spread(8).grow(256)
-        case Some(program) if program.data.length < 64 => program.spread(4).grow(256)
-        case Some(program) if program.data.length < 128 => program.spread(2).grow(256)
-        case Some(program) => program.grow(256)
+        case Some(program: Program) if program.data.length < 32 => program.spread(8).grow(256)
+        case Some(program: Program) if program.data.length < 64 => program.spread(4).grow(256)
+        case Some(program: Program) if program.data.length < 128 => program.spread(2).grow(256)
+        case Some(program: Program) => program.grow(256)
         case None => Generator(Nop.instructionSize, 256, 8, 5)
       }
     }
