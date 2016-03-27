@@ -82,7 +82,7 @@ object ThreeBitAdder {
       val path = Paths.get("optimised.json")
       (if (Files.exists(path)) {
         Files
-          .readAllLines(path)
+          .readAllLines(path, StandardCharsets.UTF_8)
           .toArray
           .mkString
           .decodeOption[Program]
