@@ -46,7 +46,8 @@ object IntegerFunctions {
     Const,
     Add, Subtract, Multiply, Divide, Modulus, Increment, Decrement,
     And, Or, XOr, Not,
-    ShiftLeft, ShiftSignedRight, ShiftUnsignedRight
+    ShiftLeft, ShiftSignedRight, ShiftUnsignedRight,
+    Max, Min
   )
 
   implicit def scoreFunc: (Option[Int], Option[Int]) => Long = (a, b) => {
@@ -555,4 +556,65 @@ object IntegerFunctions {
     }
   }
 
+  object Max extends Function[Int] {
+
+    override def typ: String = "I"
+
+    def addToClass(cf: ClassFile): ClassFile = {
+      val ch1 = cf.addMethod("I", "Max", "I", "I").codeHandler
+      ch1 << ILoad(1) << ILoad(2)
+      compile(Instruction(0)).foreach(bc => ch1 << bc)
+      ch1 << IRETURN
+      ch1.freeze()
+      cf
+    }
+
+    def compile(inst: Instruction): List[AbstractByteCode] = {
+      val labeler: String = ThreadLocalRandom.current().nextInt().toString
+      List(DUP2, If_ICmpGe("Skip" + labeler), SWAP, Label("Skip" + labeler), POP)
+    }
+
+    override def cost: Int = 3
+
+    override def getLabel(inst: Instruction): String = "Max"
+
+    override def ordered: Boolean = true
+
+    override def apply(inst: Instruction, memory: Memory[Int]): Memory[Int] = {
+      val a = memory(inst.pointer(instructionSize, argumentSize))
+      val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))
+      memory.append(math.max(a, b))
+    }
+  }
+
+  object Min extends Function[Int] {
+
+    override def typ: String = "I"
+
+    def addToClass(cf: ClassFile): ClassFile = {
+      val ch1 = cf.addMethod("I", "Min", "I", "I").codeHandler
+      ch1 << ILoad(1) << ILoad(2)
+      compile(Instruction(0)).foreach(bc => ch1 << bc)
+      ch1 << IRETURN
+      ch1.freeze()
+      cf
+    }
+
+    def compile(inst: Instruction): List[AbstractByteCode] = {
+      val labeler: String = ThreadLocalRandom.current().nextInt().toString
+      List(DUP2, If_ICmpLe("Skip" + labeler), SWAP, Label("Skip" + labeler), POP)
+    }
+
+    override def cost: Int = 3
+
+    override def getLabel(inst: Instruction): String = "Min"
+
+    override def ordered: Boolean = true
+
+    override def apply(inst: Instruction, memory: Memory[Int]): Memory[Int] = {
+      val a = memory(inst.pointer(instructionSize, argumentSize))
+      val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))
+      memory.append(math.min(a, b))
+    }
+  }
 }

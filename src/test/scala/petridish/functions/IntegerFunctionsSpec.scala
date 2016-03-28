@@ -268,4 +268,30 @@ class IntegerFunctionsSpec extends FlatSpec with GeneratorDrivenPropertyChecks {
       assert(dynObj.ShiftSignedRight(lvalue, rvalue) === (lvalue >> rvalue))
     }
   }
+
+  "Max" should "compile and function" in {
+    val cf = mkMinimalClassFile("Max")
+    Max.addToClass(cf)
+
+    val cl = new CafebabeClassLoader
+    cl.register(cf)
+    val dynObj = cl.newInstance("Max")
+
+    forAll { (lvalue: Int, rvalue: Int) =>
+      assert(dynObj.Max(lvalue, rvalue) === math.max(lvalue, rvalue))
+    }
+  }
+
+  "Min" should "compile and function" in {
+    val cf = mkMinimalClassFile("Min")
+    Min.addToClass(cf)
+
+    val cl = new CafebabeClassLoader
+    cl.register(cf)
+    val dynObj = cl.newInstance("Min")
+
+    forAll { (lvalue: Int, rvalue: Int) =>
+      assert(dynObj.Min(lvalue, rvalue) === math.min(lvalue, rvalue))
+    }
+  }
 }
