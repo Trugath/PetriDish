@@ -34,12 +34,15 @@ import cafebabe.AbstractByteCodes._
 import cafebabe.ByteCodes._
 import cafebabe.ClassFile
 import cafebabe.ClassFileTypes.{U1, U2}
+import evolve.core.Memory.ZeroValueMemory
 import evolve.core.{Instruction, Memory}
 import petridish.core.Function
 
 import scala.concurrent.forkjoin.ThreadLocalRandom
 
 object IntegerFunctions {
+
+  implicit val zero = ZeroValueMemory[Int]( 0 )
 
   implicit val functions = Seq[Function[Int]](
     Nop,
@@ -87,9 +90,9 @@ object IntegerFunctions {
 
     override def getLabel(inst: Instruction): String = "Nop"
 
-    override def apply(inst: Instruction, memory: Memory[Int]): Memory[Int] = {
-      val a = memory(inst.pointer(instructionSize, argumentSize))
-      memory.append(a)
+    override def apply(inst: Instruction, arguments: List[Int]): Int = {
+      val a = arguments.head
+      a
     }
   }
 
@@ -133,8 +136,8 @@ object IntegerFunctions {
       s"Const ($value)"
     }
 
-    override def apply(inst: Instruction, memory: Memory[Int]): Memory[Int] = {
-      memory.append(inst.const(instructionSize, 32 - instructionSize))
+    override def apply(inst: Instruction, arguments: List[Int]): Int = {
+      inst.const(instructionSize, 32 - instructionSize)
     }
   }
 
@@ -159,10 +162,10 @@ object IntegerFunctions {
 
     override def getLabel(inst: Instruction): String = "Add"
 
-    override def apply(inst: Instruction, memory: Memory[Int]): Memory[Int] = {
-      val a = memory(inst.pointer(instructionSize, argumentSize))
-      val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))
-      memory.append(a + b)
+    override def apply(inst: Instruction, arguments: List[Int]): Int = {
+      val a = arguments.head
+      val b = arguments(1)
+      a + b
     }
   }
 
@@ -189,10 +192,10 @@ object IntegerFunctions {
 
     override def ordered: Boolean = true
 
-    override def apply(inst: Instruction, memory: Memory[Int]): Memory[Int] = {
-      val a = memory(inst.pointer(instructionSize, argumentSize))
-      val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))
-      memory.append(a - b)
+    override def apply(inst: Instruction, arguments: List[Int]): Int = {
+      val a = arguments.head
+      val b = arguments(1)
+      a - b
     }
   }
 
@@ -217,10 +220,10 @@ object IntegerFunctions {
 
     override def getLabel(inst: Instruction): String = "Multiply"
 
-    override def apply(inst: Instruction, memory: Memory[Int]): Memory[Int] = {
-      val a = memory(inst.pointer(instructionSize, argumentSize))
-      val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))
-      memory.append(a * b)
+    override def apply(inst: Instruction, arguments: List[Int]): Int = {
+      val a = arguments.head
+      val b = arguments(1)
+      a * b
     }
   }
 
@@ -248,13 +251,13 @@ object IntegerFunctions {
 
     override def ordered: Boolean = true
 
-    override def apply(inst: Instruction, memory: Memory[Int]): Memory[Int] = {
-      val a = memory(inst.pointer(instructionSize, argumentSize))
-      val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))
+    override def apply(inst: Instruction, arguments: List[Int]): Int = {
+      val a = arguments.head
+      val b = arguments(1)
       try {
-        memory.append(a / b)
+        a / b
       } catch {
-        case e: ArithmeticException => memory.append(0)
+        case e: ArithmeticException => 0
       }
     }
   }
@@ -283,13 +286,13 @@ object IntegerFunctions {
 
     override def ordered: Boolean = true
 
-    override def apply(inst: Instruction, memory: Memory[Int]): Memory[Int] = {
-      val a = memory(inst.pointer(instructionSize, argumentSize))
-      val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))
+    override def apply(inst: Instruction, arguments: List[Int]): Int = {
+      val a = arguments.head
+      val b = arguments(1)
       try {
-        memory.append(a % b)
+        a % b
       } catch {
-        case e: ArithmeticException => memory.append(0)
+        case e: ArithmeticException => 0
       }
     }
   }
@@ -317,9 +320,9 @@ object IntegerFunctions {
 
     override def getLabel(inst: Instruction): String = "Increment"
 
-    override def apply(inst: Instruction, memory: Memory[Int]): Memory[Int] = {
-      val a = memory(inst.pointer(instructionSize, argumentSize))
-      memory.append(a + 1)
+    override def apply(inst: Instruction, arguments: List[Int]): Int = {
+      val a = arguments.head
+      a + 1
     }
   }
 
@@ -346,9 +349,9 @@ object IntegerFunctions {
 
     override def getLabel(inst: Instruction): String = "Decrement"
 
-    override def apply(inst: Instruction, memory: Memory[Int]): Memory[Int] = {
-      val a = memory(inst.pointer(instructionSize, argumentSize))
-      memory.append(a - 1)
+    override def apply(inst: Instruction, arguments: List[Int]): Int = {
+      val a = arguments.head
+      a - 1
     }
   }
 
@@ -373,10 +376,10 @@ object IntegerFunctions {
 
     override def getLabel(inst: Instruction): String = "&"
 
-    override def apply(inst: Instruction, memory: Memory[Int]): Memory[Int] = {
-      val a = memory(inst.pointer(instructionSize, argumentSize))
-      val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))
-      memory.append(a & b)
+    override def apply(inst: Instruction, arguments: List[Int]): Int = {
+      val a = arguments.head
+      val b = arguments(1)
+      a & b
     }
   }
 
@@ -401,10 +404,10 @@ object IntegerFunctions {
 
     override def getLabel(inst: Instruction): String = "|"
 
-    override def apply(inst: Instruction, memory: Memory[Int]): Memory[Int] = {
-      val a = memory(inst.pointer(instructionSize, argumentSize))
-      val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))
-      memory.append(a | b)
+    override def apply(inst: Instruction, arguments: List[Int]): Int = {
+      val a = arguments.head
+      val b = arguments(1)
+      a | b
     }
   }
 
@@ -429,10 +432,10 @@ object IntegerFunctions {
 
     override def getLabel(inst: Instruction): String = "^"
 
-    override def apply(inst: Instruction, memory: Memory[Int]): Memory[Int] = {
-      val a = memory(inst.pointer(instructionSize, argumentSize))
-      val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))
-      memory.append(a ^ b)
+    override def apply(inst: Instruction, arguments: List[Int]): Int = {
+      val a = arguments.head
+      val b = arguments(1)
+      a ^ b
     }
   }
 
@@ -459,9 +462,9 @@ object IntegerFunctions {
 
     override def getLabel(inst: Instruction): String = "~"
 
-    override def apply(inst: Instruction, memory: Memory[Int]): Memory[Int] = {
-      val a = memory(inst.pointer(instructionSize, argumentSize))
-      memory.append(~a)
+    override def apply(inst: Instruction, arguments: List[Int]): Int = {
+      val a = arguments.head
+      ~a
     }
   }
 
@@ -489,10 +492,10 @@ object IntegerFunctions {
 
     override def ordered: Boolean = true
 
-    override def apply(inst: Instruction, memory: Memory[Int]): Memory[Int] = {
-      val a = memory(inst.pointer(instructionSize, argumentSize))
-      val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))
-      memory.append(a << b)
+    override def apply(inst: Instruction, arguments: List[Int]): Int = {
+      val a = arguments.head
+      val b = arguments(1)
+      a << b
     }
   }
 
@@ -519,10 +522,10 @@ object IntegerFunctions {
 
     override def ordered: Boolean = true
 
-    override def apply(inst: Instruction, memory: Memory[Int]): Memory[Int] = {
-      val a = memory(inst.pointer(instructionSize, argumentSize))
-      val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))
-      memory.append(a >>> b)
+    override def apply(inst: Instruction, arguments: List[Int]): Int = {
+      val a = arguments.head
+      val b = arguments(1)
+      a >>> b
     }
   }
 
@@ -549,10 +552,10 @@ object IntegerFunctions {
 
     override def ordered: Boolean = true
 
-    override def apply(inst: Instruction, memory: Memory[Int]): Memory[Int] = {
-      val a = memory(inst.pointer(instructionSize, argumentSize))
-      val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))
-      memory.append(a >> b)
+    override def apply(inst: Instruction, arguments: List[Int]): Int = {
+      val a = arguments.head
+      val b = arguments(1)
+      a >> b
     }
   }
 
@@ -578,10 +581,10 @@ object IntegerFunctions {
 
     override def getLabel(inst: Instruction): String = "Max"
 
-    override def apply(inst: Instruction, memory: Memory[Int]): Memory[Int] = {
-      val a = memory(inst.pointer(instructionSize, argumentSize))
-      val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))
-      memory.append(math.max(a, b))
+    override def apply(inst: Instruction, arguments: List[Int]): Int = {
+      val a = arguments.head
+      val b = arguments(1)
+      math.max(a, b)
     }
   }
 
@@ -607,10 +610,10 @@ object IntegerFunctions {
 
     override def getLabel(inst: Instruction): String = "Min"
 
-    override def apply(inst: Instruction, memory: Memory[Int]): Memory[Int] = {
-      val a = memory(inst.pointer(instructionSize, argumentSize))
-      val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))
-      memory.append(math.min(a, b))
+    override def apply(inst: Instruction, arguments: List[Int]): Int = {
+      val a = arguments.head
+      val b = arguments(1)
+      math.min(a, b)
     }
   }
 }

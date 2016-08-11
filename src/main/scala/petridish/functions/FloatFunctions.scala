@@ -34,11 +34,14 @@ import cafebabe.AbstractByteCodes._
 import cafebabe.ByteCodes._
 import cafebabe.ClassFile
 import cafebabe.ClassFileTypes._
+import evolve.core.Memory.ZeroValueMemory
 import evolve.core.{Instruction, Memory}
 import petridish.core.Function
 
 
 object FloatFunctions {
+
+  implicit val zero = ZeroValueMemory[Float]( 0f )
 
   implicit val functions = Seq[Function[Float]](
     Nop,
@@ -84,9 +87,8 @@ object FloatFunctions {
 
     override def getLabel(inst: Instruction): String = "Nop"
 
-    override def apply(inst: Instruction, memory: Memory[Float]): Memory[Float] = {
-      val a = memory(inst.pointer(instructionSize, argumentSize))
-      memory.append(a)
+    override def apply(inst: Instruction, arguments: List[Float]): Float = {
+      arguments.head
     }
   }
 
@@ -129,8 +131,8 @@ object FloatFunctions {
       s"Const ($value)"
     }
 
-    override def apply(inst: Instruction, memory: Memory[Float]): Memory[Float] = {
-      memory.append(inst.const(instructionSize, 32 - instructionSize))
+    override def apply(inst: Instruction, arguments: List[Float]): Float = {
+      inst.const(instructionSize, 32 - instructionSize)
     }
   }
 
@@ -180,8 +182,8 @@ object FloatFunctions {
       s"Const ($value)"
     }
 
-    override def apply(inst: Instruction, memory: Memory[Float]): Memory[Float] = {
-      memory.append(inst.const(instructionSize, 32 - instructionSize) / scale)
+    override def apply(inst: Instruction, arguments: List[Float]): Float = {
+      inst.const(instructionSize, 32 - instructionSize) / scale
     }
   }
 
@@ -206,10 +208,10 @@ object FloatFunctions {
 
     override def getLabel(inst: Instruction): String = "Add"
 
-    override def apply(inst: Instruction, memory: Memory[Float]): Memory[Float] = {
-      val a = memory(inst.pointer(instructionSize, argumentSize))
-      val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))
-      memory.append(a + b)
+    override def apply(inst: Instruction, arguments: List[Float]): Float = {
+      val a = arguments.head
+      val b = arguments(1)
+      a + b
     }
   }
 
@@ -236,10 +238,10 @@ object FloatFunctions {
 
     override def ordered: Boolean = true
 
-    override def apply(inst: Instruction, memory: Memory[Float]): Memory[Float] = {
-      val a = memory(inst.pointer(instructionSize, argumentSize))
-      val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))
-      memory.append(a - b)
+    override def apply(inst: Instruction, arguments: List[Float]): Float = {
+      val a = arguments.head
+      val b = arguments(1)
+      a - b
     }
   }
 
@@ -264,10 +266,10 @@ object FloatFunctions {
 
     override def getLabel(inst: Instruction): String = "Multiply"
 
-    override def apply(inst: Instruction, memory: Memory[Float]): Memory[Float] = {
-      val a = memory(inst.pointer(instructionSize, argumentSize))
-      val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))
-      memory.append(a * b)
+    override def apply(inst: Instruction, arguments: List[Float]): Float = {
+      val a = arguments.head
+      val b = arguments(1)
+      a * b
     }
   }
 
@@ -294,13 +296,13 @@ object FloatFunctions {
 
     override def ordered: Boolean = true
 
-    override def apply(inst: Instruction, memory: Memory[Float]): Memory[Float] = {
-      val a = memory(inst.pointer(instructionSize, argumentSize))
-      val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))
+    override def apply(inst: Instruction, arguments: List[Float]): Float = {
+      val a = arguments.head
+      val b = arguments(1)
       try {
-        memory.append(a / b)
+        a / b
       } catch {
-        case e: ArithmeticException => memory.append(0)
+        case e: ArithmeticException => 0
       }
     }
   }
@@ -328,13 +330,13 @@ object FloatFunctions {
 
     override def ordered: Boolean = true
 
-    override def apply(inst: Instruction, memory: Memory[Float]): Memory[Float] = {
-      val a = memory(inst.pointer(instructionSize, argumentSize))
-      val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))
+    override def apply(inst: Instruction, arguments: List[Float]): Float = {
+      val a = arguments.head
+      val b = arguments(1)
       try {
-        memory.append(a % b)
+        a % b
       } catch {
-        case e: ArithmeticException => memory.append(0)
+        case e: ArithmeticException => 0
       }
     }
   }
@@ -362,9 +364,9 @@ object FloatFunctions {
 
     override def getLabel(inst: Instruction): String = "Increment"
 
-    override def apply(inst: Instruction, memory: Memory[Float]): Memory[Float] = {
-      val a = memory(inst.pointer(instructionSize, argumentSize))
-      memory.append(a + 1)
+    override def apply(inst: Instruction, arguments: List[Float]): Float = {
+      val a = arguments.head
+      a + 1
     }
   }
 
@@ -391,9 +393,9 @@ object FloatFunctions {
 
     override def getLabel(inst: Instruction): String = "Decrement"
 
-    override def apply(inst: Instruction, memory: Memory[Float]): Memory[Float] = {
-      val a = memory(inst.pointer(instructionSize, argumentSize))
-      memory.append(a - 1)
+    override def apply(inst: Instruction, arguments: List[Float]): Float = {
+      val a = arguments.head
+      a - 1
     }
   }
 

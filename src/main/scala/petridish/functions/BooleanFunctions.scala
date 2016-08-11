@@ -33,10 +33,13 @@ package petridish.functions
 import cafebabe.AbstractByteCodes._
 import cafebabe.ByteCodes.{IAND, ICONST_0, ICONST_1, IOR, IRETURN, IXOR, SWAP}
 import cafebabe.ClassFile
+import evolve.core.Memory.ZeroValueMemory
 import evolve.core.{Instruction, Memory}
 import petridish.core.Function
 
 object BooleanFunctions {
+
+  implicit val zero = ZeroValueMemory[Boolean]( false )
 
   implicit val functions = Seq[Function[Boolean]](
     Nop, Const,
@@ -76,9 +79,8 @@ object BooleanFunctions {
 
     override def getLabel(inst: Instruction): String = "Nop"
 
-    override def apply(inst: Instruction, memory: Memory[Boolean]): Memory[Boolean] = {
-      val a = memory(inst.pointer(instructionSize, argumentSize))
-      memory.append(a)
+    override def apply(inst: Instruction, arguments: List[Boolean]): Boolean = {
+      arguments.head
     }
   }
 
@@ -106,8 +108,8 @@ object BooleanFunctions {
       s"Const ($value)"
     }
 
-    override def apply(inst: Instruction, memory: Memory[Boolean]): Memory[Boolean] = {
-      memory.append(inst.const(instructionSize, 1) == -1)
+    override def apply(inst: Instruction, arguments: List[Boolean]): Boolean = {
+      inst.const(instructionSize, 1) == -1
     }
   }
 
@@ -132,10 +134,10 @@ object BooleanFunctions {
 
     override def getLabel(inst: Instruction): String = "&"
 
-    override def apply(inst: Instruction, memory: Memory[Boolean]): Memory[Boolean] = {
-      val a = memory(inst.pointer(instructionSize, argumentSize))
-      val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))
-      memory.append(a & b)
+    override def apply(inst: Instruction, arguments: List[Boolean]): Boolean = {
+      val a = arguments.head
+      val b = arguments(1)
+      a & b
     }
   }
 
@@ -160,10 +162,10 @@ object BooleanFunctions {
 
     override def getLabel(inst: Instruction): String = "|"
 
-    override def apply(inst: Instruction, memory: Memory[Boolean]): Memory[Boolean] = {
-      val a = memory(inst.pointer(instructionSize, argumentSize))
-      val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))
-      memory.append(a | b)
+    override def apply(inst: Instruction, arguments: List[Boolean]): Boolean = {
+      val a = arguments.head
+      val b = arguments(1)
+      a | b
     }
   }
 
@@ -190,9 +192,9 @@ object BooleanFunctions {
 
     override def getLabel(inst: Instruction): String = "~"
 
-    override def apply(inst: Instruction, memory: Memory[Boolean]): Memory[Boolean] = {
-      val a = memory(inst.pointer(instructionSize, argumentSize))
-      memory.append(!a)
+    override def apply(inst: Instruction, arguments: List[Boolean]): Boolean = {
+      val a = arguments.head
+      !a
     }
   }
 
@@ -220,10 +222,10 @@ object BooleanFunctions {
 
     override def ordered: Boolean = true
 
-    override def apply(inst: Instruction, memory: Memory[Boolean]): Memory[Boolean] = {
-      val a = memory(inst.pointer(instructionSize, argumentSize))
-      val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))
-      memory.append(!a || b)
+    override def apply(inst: Instruction, arguments: List[Boolean]): Boolean = {
+      val a = arguments.head
+      val b = arguments(1)
+      !a || b
     }
   }
 
@@ -249,10 +251,10 @@ object BooleanFunctions {
     // we want to be cheaper than the equivalent basic gate setup
     override def getLabel(inst: Instruction): String = "^"
 
-    override def apply(inst: Instruction, memory: Memory[Boolean]): Memory[Boolean] = {
-      val a = memory(inst.pointer(instructionSize, argumentSize))
-      val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))
-      memory.append(a ^ b)
+    override def apply(inst: Instruction, arguments: List[Boolean]): Boolean = {
+      val a = arguments.head
+      val b = arguments(1)
+      a ^ b
     }
   }
 
@@ -278,10 +280,10 @@ object BooleanFunctions {
     // we want XOR -> NOT to be cheaper
     override def getLabel(inst: Instruction): String = "=="
 
-    override def apply(inst: Instruction, memory: Memory[Boolean]): Memory[Boolean] = {
-      val a = memory(inst.pointer(instructionSize, argumentSize))
-      val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))
-      memory.append(a == b)
+    override def apply(inst: Instruction, arguments: List[Boolean]): Boolean = {
+      val a = arguments.head
+      val b = arguments(1)
+      a == b
     }
   }
 
