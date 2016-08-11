@@ -9,3 +9,5 @@ libraryDependencies += "io.argonaut" %% "argonaut" % "6.1"
 libraryDependencies += "org.scalacheck" %% "scalacheck" % "1.12.5" % "test"
 
 libraryDependencies += "org.scalatest" %% "scalatest" % "2.2.6" % "test"
+
+coverageExcludedPackages := "<empty>;petridish.example.*"
