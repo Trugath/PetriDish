@@ -34,7 +34,6 @@ import cafebabe.AbstractByteCodes._
 import cafebabe.ByteCodes._
 import cafebabe.ClassFile
 import cafebabe.ClassFileTypes.{U1, U2}
-import evolve.core.Memory.ZeroValueMemory
 import evolve.core.{Instruction, Memory}
 import petridish.core.Function
 
@@ -42,7 +41,7 @@ import scala.concurrent.forkjoin.ThreadLocalRandom
 
 object IntegerFunctions {
 
-  implicit val zero = ZeroValueMemory[Int]( 0 )
+  import petridish.core.Function._
 
   implicit val functions = Seq[Function[Int]](
     Nop,
@@ -74,17 +73,17 @@ object IntegerFunctions {
     def addToClass(cf: ClassFile): ClassFile = {
       val ch1 = cf.addMethod("I", "Nop", "I").codeHandler
       ch1 << ILoad(1)
-      compile(Instruction(0)).foreach(bc => ch1 << bc)
+      ch1 << compile(Instruction(0))
       ch1 << IRETURN
       ch1.freeze()
       cf
     }
 
-    def compile(inst: Instruction): List[AbstractByteCode] = {
+    def compile(inst: Instruction): AbstractByteCodeGenerator = {
       Nil
     }
 
-    override def arguments: Int = 1
+    override val arguments: Int = 1
 
     override def cost: Int = 2
 
@@ -107,9 +106,9 @@ object IntegerFunctions {
       cf
     }
 
-    def compile(inst: Instruction): List[AbstractByteCode] = {
+    def compile(inst: Instruction): AbstractByteCodeGenerator = {
       val i = inst.const(instructionSize, 32 - instructionSize)
-      def const(value: Int): List[AbstractByteCode] = {
+      def const(value: Int): AbstractByteCodeGenerator = {
         value match {
           case -1 => List(ICONST_M1)
           case 0 => List(ICONST_0)
@@ -120,14 +119,14 @@ object IntegerFunctions {
           case 5 => List(ICONST_5)
           case _ if value >= -128 && value <= 127 => List(BIPUSH, RawByte(value.asInstanceOf[U1]))
           case _ if value >= -32768 && value <= 32767 => List(SIPUSH, RawBytes(value.asInstanceOf[U2]))
-          case _ => const(value & 0x7fff) ::: const(value >> 15) ::: const(15) ::: List(ISHL, IOR)
+          case _ => const(value & 0x7fff) andThen const(value >> 15) andThen const(15) andThen List(ISHL, IOR)
         }
       }
 
       const(i)
     }
 
-    override def arguments: Int = 0
+    override val arguments: Int = 0
 
     override def cost: Int = 2
 
@@ -148,13 +147,13 @@ object IntegerFunctions {
     def addToClass(cf: ClassFile): ClassFile = {
       val ch1 = cf.addMethod("I", "Add", "I", "I").codeHandler
       ch1 << ILoad(1) << ILoad(2)
-      compile(Instruction(0)).foreach(bc => ch1 << bc)
+      ch1 << compile(Instruction(0))
       ch1 << IRETURN
       ch1.freeze()
       cf
     }
 
-    def compile(inst: Instruction): List[AbstractByteCode] = {
+    def compile(inst: Instruction): AbstractByteCodeGenerator = {
       List(IADD)
     }
 
@@ -176,13 +175,13 @@ object IntegerFunctions {
     def addToClass(cf: ClassFile): ClassFile = {
       val ch1 = cf.addMethod("I", "Subtract", "I", "I").codeHandler
       ch1 << ILoad(1) << ILoad(2)
-      compile(Instruction(0)).foreach(bc => ch1 << bc)
+      ch1 << compile(Instruction(0))
       ch1 << IRETURN
       ch1.freeze()
       cf
     }
 
-    def compile(inst: Instruction): List[AbstractByteCode] = {
+    def compile(inst: Instruction): AbstractByteCodeGenerator = {
       List(ISUB)
     }
 
@@ -206,13 +205,13 @@ object IntegerFunctions {
     def addToClass(cf: ClassFile): ClassFile = {
       val ch1 = cf.addMethod("I", "Multiply", "I", "I").codeHandler
       ch1 << ILoad(1) << ILoad(2)
-      compile(Instruction(0)).foreach(bc => ch1 << bc)
+      ch1 << compile(Instruction(0))
       ch1 << IRETURN
       ch1.freeze()
       cf
     }
 
-    def compile(inst: Instruction): List[AbstractByteCode] = {
+    def compile(inst: Instruction): AbstractByteCodeGenerator = {
       List(IMUL)
     }
 
@@ -234,13 +233,13 @@ object IntegerFunctions {
     def addToClass(cf: ClassFile): ClassFile = {
       val ch1 = cf.addMethod("I", "Divide", "I", "I").codeHandler
       ch1 << ILoad(1) << ILoad(2)
-      compile(Instruction(0)).foreach(bc => ch1 << bc)
+      ch1 << compile(Instruction(0))
       ch1 << IRETURN
       ch1.freeze()
       cf
     }
 
-    def compile(inst: Instruction): List[AbstractByteCode] = {
+    def compile(inst: Instruction): AbstractByteCodeGenerator = {
       val labeler: String = ThreadLocalRandom.current().nextInt().toString
       List(DUP, IfEq("Zero" + labeler), IDIV, Goto("End" + labeler), Label("Zero" + labeler), SWAP, POP, Label("End" + labeler))
     }
@@ -269,13 +268,13 @@ object IntegerFunctions {
     def addToClass(cf: ClassFile): ClassFile = {
       val ch1 = cf.addMethod("I", "Modulus", "I", "I").codeHandler
       ch1 << ILoad(1) << ILoad(2)
-      compile(Instruction(0)).foreach(bc => ch1 << bc)
+      ch1 << compile(Instruction(0))
       ch1 << IRETURN
       ch1.freeze()
       cf
     }
 
-    def compile(inst: Instruction): List[AbstractByteCode] = {
+    def compile(inst: Instruction): AbstractByteCodeGenerator = {
       val labeler: String = ThreadLocalRandom.current().nextInt().toString
       List(DUP, IfEq("Zero" + labeler), IREM, Goto("End" + labeler), Label("Zero" + labeler), SWAP, POP, Label("End" + labeler))
     }
@@ -304,17 +303,17 @@ object IntegerFunctions {
     def addToClass(cf: ClassFile): ClassFile = {
       val ch1 = cf.addMethod("I", "Increment", "I").codeHandler
       ch1 << ILoad(1)
-      compile(Instruction(0)).foreach(bc => ch1 << bc)
+      ch1 << compile(Instruction(0))
       ch1 << IRETURN
       ch1.freeze()
       cf
     }
 
-    def compile(inst: Instruction): List[AbstractByteCode] = {
+    def compile(inst: Instruction): AbstractByteCodeGenerator = {
       List(ICONST_1, IADD)
     }
 
-    override def arguments: Int = 1
+    override val arguments: Int = 1
 
     override def cost: Int = 3
 
@@ -333,17 +332,17 @@ object IntegerFunctions {
     def addToClass(cf: ClassFile): ClassFile = {
       val ch1 = cf.addMethod("I", "Decrement", "I").codeHandler
       ch1 << ILoad(1)
-      compile(Instruction(0)).foreach(bc => ch1 << bc)
+      ch1 << compile(Instruction(0))
       ch1 << IRETURN
       ch1.freeze()
       cf
     }
 
-    def compile(inst: Instruction): List[AbstractByteCode] = {
+    def compile(inst: Instruction): AbstractByteCodeGenerator = {
       List(ICONST_1, ISUB)
     }
 
-    override def arguments: Int = 1
+    override val arguments: Int = 1
 
     override def cost: Int = 3
 
@@ -362,13 +361,13 @@ object IntegerFunctions {
     def addToClass(cf: ClassFile): ClassFile = {
       val ch1 = cf.addMethod("I", "And", "I", "I").codeHandler
       ch1 << ILoad(1) << ILoad(2)
-      compile(Instruction(0)).foreach(bc => ch1 << bc)
+      ch1 << compile(Instruction(0))
       ch1 << IRETURN
       ch1.freeze()
       cf
     }
 
-    def compile(inst: Instruction): List[AbstractByteCode] = {
+    def compile(inst: Instruction): AbstractByteCodeGenerator = {
       List(IAND)
     }
 
@@ -390,13 +389,13 @@ object IntegerFunctions {
     def addToClass(cf: ClassFile): ClassFile = {
       val ch1 = cf.addMethod("I", "Or", "I", "I").codeHandler
       ch1 << ILoad(1) << ILoad(2)
-      compile(Instruction(0)).foreach(bc => ch1 << bc)
+      ch1 << compile(Instruction(0))
       ch1 << IRETURN
       ch1.freeze()
       cf
     }
 
-    def compile(inst: Instruction): List[AbstractByteCode] = {
+    def compile(inst: Instruction): AbstractByteCodeGenerator = {
       List(IOR)
     }
 
@@ -418,13 +417,13 @@ object IntegerFunctions {
     def addToClass(cf: ClassFile): ClassFile = {
       val ch1 = cf.addMethod("I", "XOr", "I", "I").codeHandler
       ch1 << ILoad(1) << ILoad(2)
-      compile(Instruction(0)).foreach(bc => ch1 << bc)
+      ch1 << compile(Instruction(0))
       ch1 << IRETURN
       ch1.freeze()
       cf
     }
 
-    def compile(inst: Instruction): List[AbstractByteCode] = {
+    def compile(inst: Instruction): AbstractByteCodeGenerator = {
       List(IXOR)
     }
 
@@ -446,17 +445,17 @@ object IntegerFunctions {
     def addToClass(cf: ClassFile): ClassFile = {
       val ch1 = cf.addMethod("I", "Not", "I").codeHandler
       ch1 << ILoad(1)
-      compile(Instruction(0)).foreach(bc => ch1 << bc)
+      ch1 << compile(Instruction(0))
       ch1 << IRETURN
       ch1.freeze()
       cf
     }
 
-    def compile(inst: Instruction): List[AbstractByteCode] = {
+    def compile(inst: Instruction): AbstractByteCodeGenerator = {
       List(ICONST_M1, IXOR)
     }
 
-    override def arguments: Int = 1
+    override val arguments: Int = 1
 
     override def cost: Int = 3
 
@@ -475,13 +474,13 @@ object IntegerFunctions {
     def addToClass(cf: ClassFile): ClassFile = {
       val ch1 = cf.addMethod("I", "ShiftLeft", "I", "I").codeHandler
       ch1 << ILoad(1) << ILoad(2)
-      compile(Instruction(0)).foreach(bc => ch1 << bc)
+      ch1 << compile(Instruction(0))
       ch1 << IRETURN
       ch1.freeze()
       cf
     }
 
-    def compile(inst: Instruction): List[AbstractByteCode] = {
+    def compile(inst: Instruction): AbstractByteCodeGenerator = {
       List(ISHL)
     }
 
@@ -506,13 +505,13 @@ object IntegerFunctions {
     def addToClass(cf: ClassFile): ClassFile = {
       val ch1 = cf.addMethod("I", "ShiftUnsignedRight", "I", "I").codeHandler
       ch1 << ILoad(1) << ILoad(2)
-      compile(Instruction(0)).foreach(bc => ch1 << bc)
+      ch1 << compile(Instruction(0))
       ch1 << IRETURN
       ch1.freeze()
       cf
     }
 
-    def compile(inst: Instruction): List[AbstractByteCode] = {
+    def compile(inst: Instruction): AbstractByteCodeGenerator = {
       List(IUSHR)
     }
 
@@ -536,13 +535,13 @@ object IntegerFunctions {
     def addToClass(cf: ClassFile): ClassFile = {
       val ch1 = cf.addMethod("I", "ShiftSignedRight", "I", "I").codeHandler
       ch1 << ILoad(1) << ILoad(2)
-      compile(Instruction(0)).foreach(bc => ch1 << bc)
+      ch1 << compile(Instruction(0))
       ch1 << IRETURN
       ch1.freeze()
       cf
     }
 
-    def compile(inst: Instruction): List[AbstractByteCode] = {
+    def compile(inst: Instruction): AbstractByteCodeGenerator = {
       List(ISHR)
     }
 
@@ -566,13 +565,13 @@ object IntegerFunctions {
     def addToClass(cf: ClassFile): ClassFile = {
       val ch1 = cf.addMethod("I", "Max", "I", "I").codeHandler
       ch1 << ILoad(1) << ILoad(2)
-      compile(Instruction(0)).foreach(bc => ch1 << bc)
+      ch1 << compile(Instruction(0))
       ch1 << IRETURN
       ch1.freeze()
       cf
     }
 
-    def compile(inst: Instruction): List[AbstractByteCode] = {
+    def compile(inst: Instruction): AbstractByteCodeGenerator = {
       val labeler: String = ThreadLocalRandom.current().nextInt().toString
       List(DUP2, If_ICmpGe("Skip" + labeler), SWAP, Label("Skip" + labeler), POP)
     }
@@ -595,13 +594,13 @@ object IntegerFunctions {
     def addToClass(cf: ClassFile): ClassFile = {
       val ch1 = cf.addMethod("I", "Min", "I", "I").codeHandler
       ch1 << ILoad(1) << ILoad(2)
-      compile(Instruction(0)).foreach(bc => ch1 << bc)
+      ch1 << compile(Instruction(0))
       ch1 << IRETURN
       ch1.freeze()
       cf
     }
 
-    def compile(inst: Instruction): List[AbstractByteCode] = {
+    def compile(inst: Instruction): AbstractByteCodeGenerator = {
       val labeler: String = ThreadLocalRandom.current().nextInt().toString
       List(DUP2, If_ICmpLe("Skip" + labeler), SWAP, Label("Skip" + labeler), POP)
     }

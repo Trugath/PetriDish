@@ -32,6 +32,7 @@ package petridish.example
 
 import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Paths}
+import java.util.concurrent.Executors
 
 import evolve.core.Evolver.EvolverStrategy
 import evolve.core._
@@ -39,6 +40,7 @@ import evolve.util.EvolveUtil
 import petridish.core.{Compiler, Json}
 
 import scala.annotation.tailrec
+import scala.concurrent.ExecutionContext
 
 object ThreeBitAdder {
 
@@ -46,7 +48,8 @@ object ThreeBitAdder {
 
     import petridish.functions.BooleanFunctions._
 
-    implicit val evolveStrategy = EvolverStrategy(128, 0.005)
+    implicit val evolveStrategy = EvolverStrategy(128, 0.005, optimiseForPipeline = false)
+    implicit val ec = ExecutionContext.fromExecutor( Executors.newFixedThreadPool( Runtime.getRuntime.availableProcessors() ) )
 
     val testCases = TestCases(List(
       TestCase(List(false, false, false), List(false, false)),
@@ -95,13 +98,17 @@ object ThreeBitAdder {
       }
     }
 
-    val solution = function(start, 0, 0)
-    Files.write(Paths.get("solution.dot"), DotGraph(solution).getBytes(StandardCharsets.UTF_8))
+    val solution = function(Generator(Nop.instructionSize, 32, 3, 2), 0, 0)
+    Files.write(Paths.get("solution.dot"), DotGraph(solution).getBytes(StandardCharsets.UTF_8) )
     Files.write(Paths.get("solution.json"), solution.shrink.asJson.toString().getBytes(StandardCharsets.UTF_8))
 
-    val optimised = EvolveUtil.counted(solution, 2000, optimise = true, testCases).shrink
-    Files.write(Paths.get("optimised.dot"), DotGraph(optimised).getBytes(StandardCharsets.UTF_8))
+    val optimised = EvolveUtil.counted(solution.nopInputs.nopOutputs.spread(3), 100000, optimise = true, testCases)
+    Files.write(Paths.get("optimised.dot"), DotGraph(optimised).getBytes(StandardCharsets.UTF_8) )
     Files.write(Paths.get("optimised.json"), optimised.asJson.toString().getBytes(StandardCharsets.UTF_8))
+
+    val pipelined = optimised.pipeline.deduplicate.pipeline.shrink
+    Files.write(Paths.get("pipelined.dot"), DotGraph(pipelined).getBytes(StandardCharsets.UTF_8) )
+    Files.write(Paths.get("pipelined.json"), optimised.asJson.toString().getBytes(StandardCharsets.UTF_8))
 
     val cf = Compiler.classFile(optimised, "optimised")
     cf.writeToFile("optimised.class")

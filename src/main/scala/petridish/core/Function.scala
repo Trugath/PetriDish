@@ -30,10 +30,26 @@
 
 package petridish.core
 
-import cafebabe.AbstractByteCodes.AbstractByteCode
-import cafebabe.ClassFile
+import cafebabe.AbstractByteCodes.{AbstractByteCode, AbstractByteCodeGenerator}
+import cafebabe.{ClassFile, CodeHandler}
 import evolve.core.{Instruction, Function => EFunc}
 
+object Function {
+
+  import scala.language.implicitConversions
+
+  implicit def abstractByteCodeToGenerator(code: AbstractByteCode): AbstractByteCodeGenerator = {
+    (ch: CodeHandler) => {
+      ch << code
+    }
+  }
+
+  implicit def abstractByteCodeListToGenerator(code: List[AbstractByteCode]): AbstractByteCodeGenerator = {
+    (ch: CodeHandler) => {
+      code.foldLeft(ch)( _ << _ )
+    }
+  }
+}
 /**
   * Created by Elliot on 22/03/2016.
   */
@@ -42,5 +58,5 @@ abstract class Function[A] extends EFunc[A] {
 
   def addToClass(cf: ClassFile): ClassFile
 
-  def compile(inst: Instruction): List[AbstractByteCode]
+  def compile(inst: Instruction): AbstractByteCodeGenerator
 }

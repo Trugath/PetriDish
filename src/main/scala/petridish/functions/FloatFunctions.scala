@@ -34,14 +34,13 @@ import cafebabe.AbstractByteCodes._
 import cafebabe.ByteCodes._
 import cafebabe.ClassFile
 import cafebabe.ClassFileTypes._
-import evolve.core.Memory.ZeroValueMemory
 import evolve.core.{Instruction, Memory}
 import petridish.core.Function
 
 
 object FloatFunctions {
 
-  implicit val zero = ZeroValueMemory[Float]( 0f )
+  import Function._
 
   implicit val functions = Seq[Function[Float]](
     Nop,
@@ -49,16 +48,13 @@ object FloatFunctions {
     Add, Subtract, Multiply, Divide, Modulus, Increment, Decrement
   )
 
-  implicit def scoreFunc: (Option[Float], Option[Float]) => Long = (a, b) => {
+  implicit def scoreFunc: (Float, Float) => Long = (a, b) => {
 
     def nabs(i: Float): Float = if (i < 0) -i else i
 
     val result: Float = (a, b) match {
-      case (Some(left), Some(right)) if left.isNaN || right.isNaN => Int.MaxValue
-      case (Some(left), Some(right)) => nabs(left - right).abs
-      case (Some(left), _) => left.abs
-      case (_, Some(right)) => right.abs
-      case (_, _) => 0
+      case (left, right) if left.isNaN || right.isNaN => Int.MaxValue
+      case (left, right)                              => nabs(left - right).abs
     }
     assert(result >= -0.00001)
     math.min(result * Int.MaxValue, Long.MaxValue / 256L).toLong
@@ -71,17 +67,17 @@ object FloatFunctions {
     def addToClass(cf: ClassFile): ClassFile = {
       val ch1 = cf.addMethod("F", "Nop", "F").codeHandler
       ch1 << FLoad(1)
-      compile(Instruction(0)).foreach(bc => ch1 << bc)
+      ch1 << compile(Instruction(0))
       ch1 << FRETURN
       ch1.freeze()
       cf
     }
 
-    def compile(inst: Instruction): List[AbstractByteCode] = {
+    def compile(inst: Instruction): AbstractByteCodeGenerator = {
       Nil
     }
 
-    override def arguments: Int = 1
+    override val arguments: Int = 1
 
     override def cost: Int = 2
 
@@ -103,9 +99,9 @@ object FloatFunctions {
       cf
     }
 
-    def compile(inst: Instruction): List[AbstractByteCode] = {
+    def compile(inst: Instruction): AbstractByteCodeGenerator = {
       val i = inst.const(instructionSize, 32 - instructionSize)
-      def const(value: Int): List[AbstractByteCode] = {
+      def const(value: Int): AbstractByteCodeGenerator = {
         value match {
           case 0 => List(ICONST_0)
           case 1 => List(ICONST_1)
@@ -115,14 +111,14 @@ object FloatFunctions {
           case 5 => List(ICONST_5)
           case _ if value >= -128 && value <= 127 => List(BIPUSH, RawByte(value.asInstanceOf[U1]))
           case _ if value >= -32768 && value <= 32767 => List(SIPUSH, RawBytes(value.asInstanceOf[U2]))
-          case _ => const(value & 0x7fff) ::: const(value >> 15) ::: const(15) ::: List(ISHL, IOR)
+          case _ => const(value & 0x7fff) andThen const(value >> 15) andThen const(15) andThen List(ISHL, IOR)
         }
       }
 
-      const(i) ::: I2F :: Nil
+      const(i) andThen List(I2F)
     }
 
-    override def arguments: Int = 0
+    override val arguments: Int = 0
 
     override def cost: Int = 2
 
@@ -149,9 +145,9 @@ object FloatFunctions {
       cf
     }
 
-    def compile(inst: Instruction): List[AbstractByteCode] = {
+    def compile(inst: Instruction): AbstractByteCodeGenerator = {
       val i = inst.const(instructionSize, 32 - instructionSize)
-      def const(value: Int): List[AbstractByteCode] = {
+      def const(value: Int): AbstractByteCodeGenerator = {
         value match {
           case -1 => List(ICONST_M1)
           case 0 => List(ICONST_0)
@@ -162,18 +158,18 @@ object FloatFunctions {
           case 5 => List(ICONST_5)
           case _ if value >= -128 && value <= 127 => List(BIPUSH, RawByte(value.asInstanceOf[U1]))
           case _ if value >= -32768 && value <= 32767 => List(SIPUSH, RawBytes(value.asInstanceOf[U2]))
-          case _ => const(value & 0x7fff) ::: const(value >> 15) ::: const(15) ::: List(ISHL, IOR)
+          case _ => const(value & 0x7fff) andThen const(value >> 15) andThen const(15) andThen List(ISHL, IOR)
         }
       }
       i match {
-        case 0 => FCONST_0 :: const(scale.toInt) ::: I2F :: FDIV :: Nil
-        case 1 => FCONST_1 :: const(scale.toInt) ::: I2F :: FDIV :: Nil
-        case 2 => FCONST_2 :: const(scale.toInt) ::: I2F :: FDIV :: Nil
-        case _ => const(i) ::: I2F :: const(scale.toInt) ::: I2F :: FDIV :: Nil
+        case 0 => FCONST_0 andThen const(scale.toInt) andThen List(I2F, FDIV)
+        case 1 => FCONST_1 andThen const(scale.toInt) andThen List(I2F, FDIV)
+        case 2 => FCONST_2 andThen const(scale.toInt) andThen List(I2F, FDIV)
+        case _ => const(i) andThen List(I2F) andThen const(scale.toInt) andThen List(I2F, FDIV)
       }
     }
 
-    override def arguments: Int = 0
+    override val arguments: Int = 0
 
     override def cost: Int = 2
 
@@ -194,13 +190,13 @@ object FloatFunctions {
     def addToClass(cf: ClassFile): ClassFile = {
       val ch1 = cf.addMethod("F", "Add", "F", "F").codeHandler
       ch1 << FLoad(1) << FLoad(2)
-      compile(Instruction(0)).foreach(bc => ch1 << bc)
+      ch1 << compile(Instruction(0))
       ch1 << FRETURN
       ch1.freeze()
       cf
     }
 
-    def compile(inst: Instruction): List[AbstractByteCode] = {
+    def compile(inst: Instruction): AbstractByteCodeGenerator = {
       List(FADD)
     }
 
@@ -222,13 +218,13 @@ object FloatFunctions {
     def addToClass(cf: ClassFile): ClassFile = {
       val ch1 = cf.addMethod("F", "Subtract", "F", "F").codeHandler
       ch1 << FLoad(1) << FLoad(2)
-      compile(Instruction(0)).foreach(bc => ch1 << bc)
+      ch1 << compile(Instruction(0))
       ch1 << FRETURN
       ch1.freeze()
       cf
     }
 
-    def compile(inst: Instruction): List[AbstractByteCode] = {
+    def compile(inst: Instruction): AbstractByteCodeGenerator = {
       List(FSUB)
     }
 
@@ -252,13 +248,13 @@ object FloatFunctions {
     def addToClass(cf: ClassFile): ClassFile = {
       val ch1 = cf.addMethod("F", "Multiply", "F", "F").codeHandler
       ch1 << FLoad(1) << FLoad(2)
-      compile(Instruction(0)).foreach(bc => ch1 << bc)
+      ch1 << compile(Instruction(0))
       ch1 << FRETURN
       ch1.freeze()
       cf
     }
 
-    def compile(inst: Instruction): List[AbstractByteCode] = {
+    def compile(inst: Instruction): AbstractByteCodeGenerator = {
       List(FMUL)
     }
 
@@ -280,13 +276,13 @@ object FloatFunctions {
     def addToClass(cf: ClassFile): ClassFile = {
       val ch1 = cf.addMethod("F", "Divide", "F", "F").codeHandler
       ch1 << FLoad(1) << FLoad(2)
-      compile(Instruction(0)).foreach(bc => ch1 << bc)
+      ch1 << compile(Instruction(0))
       ch1 << FRETURN
       ch1.freeze()
       cf
     }
 
-    def compile(inst: Instruction): List[AbstractByteCode] = {
+    def compile(inst: Instruction): AbstractByteCodeGenerator = {
       List(FDIV)
     }
 
@@ -314,13 +310,13 @@ object FloatFunctions {
     def addToClass(cf: ClassFile): ClassFile = {
       val ch1 = cf.addMethod("F", "Modulus", "F", "F").codeHandler
       ch1 << FLoad(1) << FLoad(2)
-      compile(Instruction(0)).foreach(bc => ch1 << bc)
+      ch1 << compile(Instruction(0))
       ch1 << FRETURN
       ch1.freeze()
       cf
     }
 
-    def compile(inst: Instruction): List[AbstractByteCode] = {
+    def compile(inst: Instruction): AbstractByteCodeGenerator = {
       List(FREM)
     }
 
@@ -348,17 +344,17 @@ object FloatFunctions {
     def addToClass(cf: ClassFile): ClassFile = {
       val ch1 = cf.addMethod("F", "Increment", "F").codeHandler
       ch1 << FLoad(1)
-      compile(Instruction(0)).foreach(bc => ch1 << bc)
+      ch1 << compile(Instruction(0))
       ch1 << FRETURN
       ch1.freeze()
       cf
     }
 
-    def compile(inst: Instruction): List[AbstractByteCode] = {
+    def compile(inst: Instruction): AbstractByteCodeGenerator = {
       List(FCONST_1, FADD)
     }
 
-    override def arguments: Int = 1
+    override val arguments: Int = 1
 
     override def cost: Int = 3
 
@@ -377,17 +373,17 @@ object FloatFunctions {
     def addToClass(cf: ClassFile): ClassFile = {
       val ch1 = cf.addMethod("F", "Decrement", "F").codeHandler
       ch1 << FLoad(1)
-      compile(Instruction(0)).foreach(bc => ch1 << bc)
+      ch1 << compile(Instruction(0))
       ch1 << FRETURN
       ch1.freeze()
       cf
     }
 
-    def compile(inst: Instruction): List[AbstractByteCode] = {
+    def compile(inst: Instruction): AbstractByteCodeGenerator = {
       List(FCONST_1, FSUB)
     }
 
-    override def arguments: Int = 1
+    override val arguments: Int = 1
 
     override def cost: Int = 3
 

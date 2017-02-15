@@ -32,33 +32,30 @@ package petridish.functions
 
 import cafebabe.AbstractByteCodes._
 import cafebabe.ByteCodes._
-import cafebabe.ClassFile
+import cafebabe.{ClassFile, CodeHandler}
 import cafebabe.ClassFileTypes._
-import evolve.core.Memory.ZeroValueMemory
 import evolve.core.{Instruction, Memory}
 import petridish.core.Function
 
 
 object DoubleFunctions {
 
-  implicit val zero = ZeroValueMemory[Double]( 0.0 )
+  import Function._
 
   implicit val functions = Seq[Function[Double]](
     Nop,
     ConstLarge, ConstSmall,
-    Add, Subtract, Multiply, Divide, Modulus, Increment, Decrement
+    Add, Subtract, Multiply, Divide, Modulus, Increment, Decrement,
+    SquareRoot
   )
 
-  implicit def scoreFunc: (Option[Double], Option[Double]) => Long = (a, b) => {
+  implicit def scoreFunc: (Double, Double) => Long = (a, b) => {
 
     def nabs(i: Double): Double = if (i < 0) -i else i
 
     val result: Double = (a, b) match {
-      case (Some(left), Some(right)) if left.isNaN || right.isNaN => Int.MaxValue
-      case (Some(left), Some(right)) => nabs(left - right).abs
-      case (Some(left), _) => left.abs
-      case (_, Some(right)) => right.abs
-      case (_, _) => 0
+      case (left, right) if left.isNaN || right.isNaN => Int.MaxValue
+      case (left, right)                              => nabs(left - right).abs
     }
     assert(result >= -0.00001)
     math.min(result * Int.MaxValue, Long.MaxValue / 256L).toLong
@@ -71,17 +68,17 @@ object DoubleFunctions {
     def addToClass(cf: ClassFile): ClassFile = {
       val ch1 = cf.addMethod("D", "Nop", "D").codeHandler
       ch1 << DLoad(1)
-      compile(Instruction(0)).foreach(bc => ch1 << bc)
+      ch1 << compile(Instruction(0))
       ch1 << DRETURN
       ch1.freeze()
       cf
     }
 
-    def compile(inst: Instruction): List[AbstractByteCode] = {
+    def compile(inst: Instruction): AbstractByteCodeGenerator = {
       Nil
     }
 
-    override def arguments: Int = 1
+    override val arguments: Int = 1
 
     override def cost: Int = 2
 
@@ -103,9 +100,9 @@ object DoubleFunctions {
       cf
     }
 
-    def compile(inst: Instruction): List[AbstractByteCode] = {
+    def compile(inst: Instruction): AbstractByteCodeGenerator = {
       val i = inst.const(instructionSize, 32 - instructionSize)
-      def const(value: Int): List[AbstractByteCode] = {
+      def const(value: Int): AbstractByteCodeGenerator = {
         value match {
           case 0 => List(ICONST_0)
           case 1 => List(ICONST_1)
@@ -115,14 +112,14 @@ object DoubleFunctions {
           case 5 => List(ICONST_5)
           case _ if value >= -128 && value <= 127 => List(BIPUSH, RawByte(value.asInstanceOf[U1]))
           case _ if value >= -32768 && value <= 32767 => List(SIPUSH, RawBytes(value.asInstanceOf[U2]))
-          case _ => const(value & 0x7fff) ::: const(value >> 15) ::: const(15) ::: List(ISHL, IOR)
+          case _ => const(value & 0x7fff) andThen const(value >> 15) andThen const(15) andThen List(ISHL, IOR)
         }
       }
 
-      const(i) ::: I2D :: Nil
+      const(i) andThen I2D
     }
 
-    override def arguments: Int = 0
+    override val arguments: Int = 0
 
     override def cost: Int = 2
 
@@ -149,9 +146,9 @@ object DoubleFunctions {
       cf
     }
 
-    def compile(inst: Instruction): List[AbstractByteCode] = {
+    def compile(inst: Instruction): AbstractByteCodeGenerator = {
       val i = inst.const(instructionSize, 32 - instructionSize)
-      def const(value: Int): List[AbstractByteCode] = {
+      def const(value: Int): AbstractByteCodeGenerator = {
         value match {
           case -1 => List(ICONST_M1)
           case 0 => List(ICONST_0)
@@ -162,17 +159,17 @@ object DoubleFunctions {
           case 5 => List(ICONST_5)
           case _ if value >= -128 && value <= 127 => List(BIPUSH, RawByte(value.asInstanceOf[U1]))
           case _ if value >= -32768 && value <= 32767 => List(SIPUSH, RawBytes(value.asInstanceOf[U2]))
-          case _ => const(value & 0x7fff) ::: const(value >> 15) ::: const(15) ::: List(ISHL, IOR)
+          case _ => const(value & 0x7fff) andThen const(value >> 15) andThen const(15) andThen ISHL andThen IOR
         }
       }
       i match {
-        case 0 => DCONST_0 :: const(scale.toInt) ::: I2D :: DDIV :: Nil
-        case 1 => DCONST_1 :: const(scale.toInt) ::: I2D :: DDIV :: Nil
-        case _ => const(i) ::: I2D :: const(scale.toInt) ::: I2D :: DDIV :: Nil
+        case 0 => DCONST_0 andThen const(scale.toInt) andThen I2D andThen DDIV
+        case 1 => DCONST_1 andThen const(scale.toInt) andThen I2D andThen DDIV
+        case _ => const(i) andThen I2D andThen const(scale.toInt) andThen I2D andThen DDIV
       }
     }
 
-    override def arguments: Int = 0
+    override val arguments: Int = 0
 
     override def cost: Int = 2
 
@@ -193,13 +190,13 @@ object DoubleFunctions {
     def addToClass(cf: ClassFile): ClassFile = {
       val ch1 = cf.addMethod("D", "Add", "D", "D").codeHandler
       ch1 << DLoad(1) << DLoad(3)
-      compile(Instruction(0)).foreach(bc => ch1 << bc)
+      ch1 << compile(Instruction(0))
       ch1 << DRETURN
       ch1.freeze()
       cf
     }
 
-    def compile(inst: Instruction): List[AbstractByteCode] = {
+    def compile(inst: Instruction): AbstractByteCodeGenerator = {
       List(DADD)
     }
 
@@ -221,13 +218,13 @@ object DoubleFunctions {
     def addToClass(cf: ClassFile): ClassFile = {
       val ch1 = cf.addMethod("D", "Subtract", "D", "D").codeHandler
       ch1 << DLoad(1) << DLoad(3)
-      compile(Instruction(0)).foreach(bc => ch1 << bc)
+      ch1 << compile(Instruction(0))
       ch1 << DRETURN
       ch1.freeze()
       cf
     }
 
-    def compile(inst: Instruction): List[AbstractByteCode] = {
+    def compile(inst: Instruction): AbstractByteCodeGenerator = {
       List(DSUB)
     }
 
@@ -251,13 +248,13 @@ object DoubleFunctions {
     def addToClass(cf: ClassFile): ClassFile = {
       val ch1 = cf.addMethod("D", "Multiply", "D", "D").codeHandler
       ch1 << DLoad(1) << DLoad(3)
-      compile(Instruction(0)).foreach(bc => ch1 << bc)
+      ch1 << compile(Instruction(0))
       ch1 << DRETURN
       ch1.freeze()
       cf
     }
 
-    def compile(inst: Instruction): List[AbstractByteCode] = {
+    def compile(inst: Instruction): AbstractByteCodeGenerator = {
       List(DMUL)
     }
 
@@ -279,13 +276,13 @@ object DoubleFunctions {
     def addToClass(cf: ClassFile): ClassFile = {
       val ch1 = cf.addMethod("D", "Divide", "D", "D").codeHandler
       ch1 << DLoad(1) << DLoad(3)
-      compile(Instruction(0)).foreach(bc => ch1 << bc)
+      ch1 << compile(Instruction(0))
       ch1 << DRETURN
       ch1.freeze()
       cf
     }
 
-    def compile(inst: Instruction): List[AbstractByteCode] = {
+    def compile(inst: Instruction): AbstractByteCodeGenerator = {
       List(DDIV)
     }
 
@@ -313,13 +310,13 @@ object DoubleFunctions {
     def addToClass(cf: ClassFile): ClassFile = {
       val ch1 = cf.addMethod("D", "Modulus", "D", "D").codeHandler
       ch1 << DLoad(1) << DLoad(3)
-      compile(Instruction(0)).foreach(bc => ch1 << bc)
+      ch1 << compile(Instruction(0))
       ch1 << DRETURN
       ch1.freeze()
       cf
     }
 
-    def compile(inst: Instruction): List[AbstractByteCode] = {
+    def compile(inst: Instruction): AbstractByteCodeGenerator = {
       List(DREM)
     }
 
@@ -347,17 +344,17 @@ object DoubleFunctions {
     def addToClass(cf: ClassFile): ClassFile = {
       val ch1 = cf.addMethod("D", "Increment", "D").codeHandler
       ch1 << DLoad(1)
-      compile(Instruction(0)).foreach(bc => ch1 << bc)
+      ch1 << compile(Instruction(0))
       ch1 << DRETURN
       ch1.freeze()
       cf
     }
 
-    def compile(inst: Instruction): List[AbstractByteCode] = {
+    def compile(inst: Instruction): AbstractByteCodeGenerator = {
       List(DCONST_1, DADD)
     }
 
-    override def arguments: Int = 1
+    override val arguments: Int = 1
 
     override def cost: Int = 3
 
@@ -376,17 +373,17 @@ object DoubleFunctions {
     def addToClass(cf: ClassFile): ClassFile = {
       val ch1 = cf.addMethod("D", "Decrement", "D").codeHandler
       ch1 << DLoad(1)
-      compile(Instruction(0)).foreach(bc => ch1 << bc)
+      ch1 << compile(Instruction(0))
       ch1 << DRETURN
       ch1.freeze()
       cf
     }
 
-    def compile(inst: Instruction): List[AbstractByteCode] = {
+    def compile(inst: Instruction): AbstractByteCodeGenerator = {
       List(DCONST_1, DSUB)
     }
 
-    override def arguments: Int = 1
+    override val arguments: Int = 1
 
     override def cost: Int = 3
 
@@ -398,4 +395,33 @@ object DoubleFunctions {
     }
   }
 
+  object SquareRoot extends Function[Double] {
+
+    override def typ: String = "D"
+
+    def addToClass(cf: ClassFile): ClassFile = {
+      val ch1 = cf.addMethod("D", "SquareRoot", "D").codeHandler
+      ch1 << DLoad(1)
+      ch1 << compile(Instruction(0))
+      ch1 << DRETURN
+      ch1.freeze()
+      cf
+    }
+
+    def compile(inst: Instruction): AbstractByteCodeGenerator = {
+      (ch: CodeHandler) => {
+        ch << InvokeStatic("java/lang/Math", "sqrt", "(D)D")
+      }
+    }
+
+    override val arguments: Int = 1
+
+    override def cost: Int = 3
+
+    override def getLabel(inst: Instruction): String = "Decrement"
+
+    override def apply(inst: Instruction, arguments: List[Double]): Double = {
+      math.sqrt(arguments.head)
+    }
+  }
 }

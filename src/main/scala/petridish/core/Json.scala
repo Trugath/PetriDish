@@ -31,7 +31,7 @@
 package petridish.core
 
 import argonaut.Argonaut._
-import argonaut.{CodecJson, EncodeJson, Json}
+import argonaut.{CodecJson, EncodeJson, Json => ArgoJson}
 import evolve.core.{Instruction, Program}
 
 /**
@@ -42,7 +42,7 @@ object Json {
   implicit def seqCodec[T](implicit codec: CodecJson[T]): CodecJson[Seq[T]] =
     argonaut.CodecJson.derived[Seq[T]](
       new EncodeJson[Seq[T]]{
-        def encode(a: Seq[T]): Json =
+        def encode(a: Seq[T]): ArgoJson =
           jArray(a.map(codec.encode).toList)
       },
       optionDecoder[Seq[T]](_.array.map(_.flatMap(t => codec.decodeJson(t).toOption)), "array")

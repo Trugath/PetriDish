@@ -50,7 +50,7 @@ class DoubleCompilerSpec extends FlatSpec with PropertyChecks with GeneratorDriv
       }
     }
   }
-  val twoInputOneOutputDoubleProgramRange = for {
+  val twoInputOneOutputDoubleProgramRange: Gen[Program] = for {
     size <- Gen.choose[Int](2, math.pow(2, Nop.instructionSize).floor.toInt)
     seed <- Gen.choose[Int](Int.MinValue, Int.MaxValue)
   } yield Generator(Nop.instructionSize, size, 2, 1, seed).shrink
@@ -68,7 +68,7 @@ class DoubleCompilerSpec extends FlatSpec with PropertyChecks with GeneratorDriv
     }
   }
 
-  val threeInputOneOutputDoubleProgramRange = for {
+  val threeInputOneOutputDoubleProgramRange: Gen[Program] = for {
     size <- Gen.choose[Int](3, math.pow(2, Nop.instructionSize).floor.toInt)
     seed <- Gen.choose[Int](Int.MinValue, Int.MaxValue)
   } yield Generator(Nop.instructionSize, size, 3, 1, seed).shrink
@@ -86,7 +86,7 @@ class DoubleCompilerSpec extends FlatSpec with PropertyChecks with GeneratorDriv
     }
   }
 
-  val twoInputTwoOutputDoubleProgramRange = for {
+  val twoInputTwoOutputDoubleProgramRange: Gen[Program] = for {
     size <- Gen.choose[Int](2, math.pow(2, Nop.instructionSize).floor.toInt)
     seed <- Gen.choose[Int](Int.MinValue, Int.MaxValue)
   } yield Generator(Nop.instructionSize, size, 2, 2, seed).shrink
@@ -107,7 +107,7 @@ class DoubleCompilerSpec extends FlatSpec with PropertyChecks with GeneratorDriv
     }
   }
 
-  val threeInputTwoOutputDoubleProgramRange = for {
+  val threeInputTwoOutputDoubleProgramRange: Gen[Program] = for {
     size <- Gen.choose[Int](3, math.pow(2, Nop.instructionSize).floor.toInt)
     seed <- Gen.choose[Int](Int.MinValue, Int.MaxValue)
   } yield Generator(Nop.instructionSize, size, 3, 2, seed).shrink

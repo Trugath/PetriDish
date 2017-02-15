@@ -33,13 +33,12 @@ package petridish.functions
 import cafebabe.AbstractByteCodes._
 import cafebabe.ByteCodes.{IAND, ICONST_0, ICONST_1, IOR, IRETURN, IXOR, SWAP}
 import cafebabe.ClassFile
-import evolve.core.Memory.ZeroValueMemory
-import evolve.core.{Instruction, Memory}
+import evolve.core.Instruction
 import petridish.core.Function
 
 object BooleanFunctions {
 
-  implicit val zero = ZeroValueMemory[Boolean]( false )
+  import Function._
 
   implicit val functions = Seq[Function[Boolean]](
     Nop, Const,
@@ -47,13 +46,8 @@ object BooleanFunctions {
     Implication, XOr, Equal
   )
 
-  implicit def scoreFunc: (Option[Boolean], Option[Boolean]) => Long = (a, b) => {
-    val result = (a, b) match {
-      case (Some(left), Some(right)) => if (left == right) 0 else 10
-      case (Some(left), None) => 15
-      case (None, Some(right)) => 15
-      case (None, None) => 0
-    }
+  implicit def scoreFunc: (Boolean, Boolean) => Long = (a, b) => {
+    val result = if (a == b) 0 else 10
     assert(result >= 0)
     result * 100
   }
@@ -69,11 +63,11 @@ object BooleanFunctions {
       cf
     }
 
-    def compile(inst: Instruction): List[AbstractByteCode] = {
+    def compile(inst: Instruction): AbstractByteCodeGenerator = {
       Nil
     }
 
-    override def arguments: Int = 1
+    override val arguments: Int = 1
 
     override def cost: Int = 1
 
@@ -95,11 +89,11 @@ object BooleanFunctions {
       cf
     }
 
-    def compile(inst: Instruction): List[AbstractByteCode] = {
-      List(if (inst.const(instructionSize, 1) == -1) ICONST_1 else ICONST_0)
+    def compile(inst: Instruction): AbstractByteCodeGenerator = {
+      if (inst.const(instructionSize, 1) == -1) ICONST_1 else ICONST_0
     }
 
-    override def arguments: Int = 0
+    override val arguments: Int = 0
 
     override def cost: Int = 1
 
@@ -120,13 +114,13 @@ object BooleanFunctions {
     def addToClass(cf: ClassFile): ClassFile = {
       val ch1 = cf.addMethod("Z", "And", "Z", "Z").codeHandler
       ch1 << ILoad(1) << ILoad(2)
-      compile(Instruction(0)).foreach(bc => ch1 << bc)
+      ch1 << compile(Instruction(0))
       ch1 << IRETURN
       ch1.freeze()
       cf
     }
 
-    def compile(inst: Instruction): List[AbstractByteCode] = {
+    def compile(inst: Instruction): AbstractByteCodeGenerator = {
       List(IAND)
     }
 
@@ -148,13 +142,13 @@ object BooleanFunctions {
     def addToClass(cf: ClassFile): ClassFile = {
       val ch1 = cf.addMethod("Z", "Or", "Z", "Z").codeHandler
       ch1 << ILoad(1) << ILoad(2)
-      compile(Instruction(0)).foreach(bc => ch1 << bc)
+      ch1 << compile(Instruction(0))
       ch1 << IRETURN
       ch1.freeze()
       cf
     }
 
-    def compile(inst: Instruction): List[AbstractByteCode] = {
+    def compile(inst: Instruction): AbstractByteCodeGenerator = {
       List(IOR)
     }
 
@@ -176,17 +170,17 @@ object BooleanFunctions {
     def addToClass(cf: ClassFile): ClassFile = {
       val ch1 = cf.addMethod("Z", "Not", "Z").codeHandler
       ch1 << ILoad(1)
-      compile(Instruction(0)).foreach(bc => ch1 << bc)
+      ch1 << compile(Instruction(0))
       ch1 << IRETURN
       ch1.freeze()
       cf
     }
 
-    def compile(inst: Instruction): List[AbstractByteCode] = {
+    def compile(inst: Instruction): AbstractByteCodeGenerator = {
       List(ICONST_1, IXOR)
     }
 
-    override def arguments: Int = 1
+    override val arguments: Int = 1
 
     override def cost: Int = 2
 
@@ -205,13 +199,13 @@ object BooleanFunctions {
     def addToClass(cf: ClassFile): ClassFile = {
       val ch1 = cf.addMethod("Z", "Implication", "Z", "Z").codeHandler
       ch1 << ILoad(1) << ILoad(2)
-      compile(Instruction(0)).foreach(bc => ch1 << bc)
+      ch1 << compile(Instruction(0))
       ch1 << IRETURN
       ch1.freeze()
       cf
     }
 
-    def compile(inst: Instruction): List[AbstractByteCode] = {
+    def compile(inst: Instruction): AbstractByteCodeGenerator = {
       List(SWAP, ICONST_1, IXOR, IOR)
     }
 
@@ -236,13 +230,13 @@ object BooleanFunctions {
     def addToClass(cf: ClassFile): ClassFile = {
       val ch1 = cf.addMethod("Z", "XOr", "Z", "Z").codeHandler
       ch1 << ILoad(1) << ILoad(2)
-      compile(Instruction(0)).foreach(bc => ch1 << bc)
+      ch1 << compile(Instruction(0))
       ch1 << IRETURN
       ch1.freeze()
       cf
     }
 
-    def compile(inst: Instruction): List[AbstractByteCode] = {
+    def compile(inst: Instruction): AbstractByteCodeGenerator = {
       List(IXOR)
     }
 
@@ -265,13 +259,13 @@ object BooleanFunctions {
     def addToClass(cf: ClassFile): ClassFile = {
       val ch1 = cf.addMethod("Z", "Equal", "Z", "Z").codeHandler
       ch1 << ILoad(1) << ILoad(2)
-      compile(Instruction(0)).foreach(bc => ch1 << bc)
+      ch1 << compile(Instruction(0))
       ch1 << IRETURN
       ch1.freeze()
       cf
     }
 
-    def compile(inst: Instruction): List[AbstractByteCode] = {
+    def compile(inst: Instruction): AbstractByteCodeGenerator = {
       List(IXOR, ICONST_1, IXOR)
     }
 
