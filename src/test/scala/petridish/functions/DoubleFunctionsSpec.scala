@@ -282,7 +282,7 @@ class DoubleFunctionsSpec extends FlatSpec with GeneratorDrivenPropertyChecks {
         assert( math.sqrt(value).isNaN )
       else
         assert( a === math.sqrt(value))
-      val b = compiled.run(value).asInstanceOf[Array[Double]]
+      val b: Array[Double] = compiled.run(value).asInstanceOf[Array[Double]]
       if(b(0).isNaN)
         assert( math.sqrt(value).isNaN )
       else
