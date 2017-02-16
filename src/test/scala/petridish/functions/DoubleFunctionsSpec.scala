@@ -251,7 +251,6 @@ class DoubleFunctionsSpec extends FlatSpec with GeneratorDrivenPropertyChecks {
     val inst = Instruction(0)
       .instruction(functions.indexOf(Decrement), Decrement.instructionSize)
       .pointer(0, Decrement.instructionSize, Decrement.argumentSize)
-      .pointer(1, Decrement.instructionSize + Decrement.argumentSize, Decrement.argumentSize)
 
     val program = Program(Decrement.instructionSize, Seq(inst), 1, 1)
     val compiled = Compiler(program)
@@ -259,6 +258,35 @@ class DoubleFunctionsSpec extends FlatSpec with GeneratorDrivenPropertyChecks {
     forAll { (value: Double) =>
       assert(dynObj.Decrement(value) === (value - 1))
       assert(compiled.run(value) === List(value - 1))
+    }
+  }
+
+  "SquareRoot" should "compile and function" in {
+    val cf = mkMinimalClassFile("SquareRoot")
+    SquareRoot.addToClass(cf)
+
+    val cl = new CafebabeClassLoader
+    cl.register(cf)
+    val dynObj = cl.newInstance("SquareRoot")
+
+    val inst = Instruction(0)
+      .instruction(functions.indexOf(SquareRoot), SquareRoot.instructionSize)
+      .pointer(0, SquareRoot.instructionSize, SquareRoot.argumentSize)
+
+    val program = Program(SquareRoot.instructionSize, Seq(inst), 1, 1)
+    val compiled = Compiler(program)
+
+    forAll { (value: Double) =>
+      val a: Double = dynObj.SquareRoot(value).asInstanceOf[Double]
+      if( a.isNaN )
+        assert( math.sqrt(value).isNaN )
+      else
+        assert( a === math.sqrt(value))
+      val b = compiled.run(value).asInstanceOf[Array[Double]]
+      if(b(0).isNaN)
+        assert( math.sqrt(value).isNaN )
+      else
+        assert( b === List(math.sqrt(value)))
     }
   }
 }
