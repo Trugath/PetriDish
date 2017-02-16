@@ -80,7 +80,7 @@ object DoubleFunctions {
 
     override val arguments: Int = 1
 
-    override def cost: Int = 2
+    override val cost: Int = 2
 
     override def getLabel(inst: Instruction): String = "Nop"
 
@@ -121,21 +121,21 @@ object DoubleFunctions {
 
     override val arguments: Int = 0
 
-    override def cost: Int = 2
+    override val constantRegionSize: Int = 32 - constantRegionStart
+
+    override val cost: Int = 2
 
     override def getLabel(inst: Instruction): String = {
-      val value = inst.const(instructionSize, 32 - instructionSize)
+      val value = inst.const(constantRegionSize, constantRegionSize)
       s"Const ($value)"
     }
 
     override def apply(inst: Instruction, arguments: List[Double]): Double = {
-      inst.const(instructionSize, 32 - instructionSize)
+      inst.const(constantRegionSize, constantRegionSize)
     }
   }
 
   object ConstSmall extends Function[Double] {
-
-    private val scale: Double = math.pow(2.0, 32 - instructionSize).toDouble
 
     override def typ: String = "D"
 
@@ -171,15 +171,19 @@ object DoubleFunctions {
 
     override val arguments: Int = 0
 
-    override def cost: Int = 2
+    override val constantRegionSize: Int = 32 - constantRegionStart
+
+    private [this] val scale: Double = math.pow(2.0, constantRegionSize).toDouble
+
+    override val cost: Int = 2
 
     override def getLabel(inst: Instruction): String = {
-      val value = inst.const(instructionSize, 32 - instructionSize) / scale
+      val value = inst.const(constantRegionStart, constantRegionSize) / scale
       s"Const ($value)"
     }
 
     override def apply(inst: Instruction, arguments: List[Double]): Double = {
-      inst.const(instructionSize, 32 - instructionSize) / scale
+      inst.const(constantRegionStart, constantRegionSize) / scale
     }
   }
 
@@ -197,10 +201,10 @@ object DoubleFunctions {
     }
 
     def compile(inst: Instruction): AbstractByteCodeGenerator = {
-      List(DADD)
+      DADD
     }
 
-    override def cost: Int = 4
+    override val cost: Int = 4
 
     override def getLabel(inst: Instruction): String = "Add"
 
@@ -225,10 +229,10 @@ object DoubleFunctions {
     }
 
     def compile(inst: Instruction): AbstractByteCodeGenerator = {
-      List(DSUB)
+      DSUB
     }
 
-    override def cost: Int = 4
+    override val cost: Int = 4
 
     override def getLabel(inst: Instruction): String = "Subtract"
 
@@ -255,10 +259,10 @@ object DoubleFunctions {
     }
 
     def compile(inst: Instruction): AbstractByteCodeGenerator = {
-      List(DMUL)
+      DMUL
     }
 
-    override def cost: Int = 5
+    override val cost: Int = 5
 
     override def getLabel(inst: Instruction): String = "Multiply"
 
@@ -283,10 +287,10 @@ object DoubleFunctions {
     }
 
     def compile(inst: Instruction): AbstractByteCodeGenerator = {
-      List(DDIV)
+      DDIV
     }
 
-    override def cost: Int = 10
+    override val cost: Int = 10
 
     override def getLabel(inst: Instruction): String = "Divide"
 
@@ -317,10 +321,10 @@ object DoubleFunctions {
     }
 
     def compile(inst: Instruction): AbstractByteCodeGenerator = {
-      List(DREM)
+      DREM
     }
 
-    override def cost: Int = 10
+    override val cost: Int = 10
 
     override def getLabel(inst: Instruction): String = "Modulus"
 
@@ -356,7 +360,7 @@ object DoubleFunctions {
 
     override val arguments: Int = 1
 
-    override def cost: Int = 3
+    override val cost: Int = 3
 
     override def getLabel(inst: Instruction): String = "Increment"
 
@@ -385,7 +389,7 @@ object DoubleFunctions {
 
     override val arguments: Int = 1
 
-    override def cost: Int = 3
+    override val cost: Int = 3
 
     override def getLabel(inst: Instruction): String = "Decrement"
 
@@ -416,7 +420,7 @@ object DoubleFunctions {
 
     override val arguments: Int = 1
 
-    override def cost: Int = 3
+    override val cost: Int = 3
 
     override def getLabel(inst: Instruction): String = "Decrement"
 

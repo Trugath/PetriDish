@@ -48,7 +48,7 @@ object FourBitFullAdder {
 
     import petridish.functions.BooleanFunctions._
 
-    implicit val evolverStrategy = EvolverStrategy(32, 0.003, optimiseForPipeline = false)
+    implicit val evolverStrategy = EvolverStrategy(24, 0.00015, optimiseForPipeline = true)
     implicit val ec = ExecutionContext.fromExecutor( Executors.newFixedThreadPool( Runtime.getRuntime.availableProcessors() ) )
 
     def bitsToBools(value: Int, bits: Int): List[Boolean] = {
@@ -83,11 +83,30 @@ object FourBitFullAdder {
     import Json._
     import argonaut.Argonaut._
 
-    val solution = function(Generator(Nop.instructionSize, 256, 8, 5), 0, 0).deduplicate.pipeline.shrink
+    val start: Program = {
+      val path = Paths.get("pipelined.json")
+      (if (Files.exists(path)) {
+        Files
+          .readAllLines(path, StandardCharsets.UTF_8)
+          .toArray
+          .mkString
+          .decodeOption[Program]
+      } else None) match {
+        case Some(program: Program) if program.inputCount == 8 && program.outputCount == 5 =>
+          assert( testCases.score( program ) == 0 )
+          program.pipeline.grow(256)
+        case _                   =>
+          Generator(Nop.instructionSize, 256, 8, 5)
+      }
+    }
+
+    val solution = function(EvolveUtil.counted(start, 2000, optimise = false, testCases), 0, 0).denop.deduplicate.shrink
+    assert( testCases.score( solution ) == 0 )
     Files.write(Paths.get("solution.dot"), DotGraph(solution).getBytes(StandardCharsets.UTF_8))
     Files.write(Paths.get("solution.json"), solution.shrink.asJson.toString().getBytes(StandardCharsets.UTF_8))
 
-    val optimised = EvolveUtil.counted(solution, 2000, optimise = true, testCases).shrink
+    val optimised = EvolveUtil.counted(solution, 20000, optimise = true, testCases).denop.deduplicate.shrink
+    assert( testCases.score( optimised ) == 0 )
     Files.write(Paths.get("optimised.dot"), DotGraph(optimised).getBytes(StandardCharsets.UTF_8))
     Files.write(Paths.get("optimised.json"), optimised.asJson.toString().getBytes(StandardCharsets.UTF_8))
 
@@ -97,5 +116,8 @@ object FourBitFullAdder {
 
     val cf = Compiler.classFile(optimised, "optimised")
     cf.writeToFile("optimised.class")
+
+    System.gc()
+    System.exit(0)
   }
 }

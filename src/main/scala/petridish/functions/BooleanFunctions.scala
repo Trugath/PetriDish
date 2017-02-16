@@ -69,7 +69,7 @@ object BooleanFunctions {
 
     override val arguments: Int = 1
 
-    override def cost: Int = 1
+    override val cost: Int = 1
 
     override def getLabel(inst: Instruction): String = "Nop"
 
@@ -95,15 +95,17 @@ object BooleanFunctions {
 
     override val arguments: Int = 0
 
-    override def cost: Int = 1
+    override val constantRegionSize = 1
+
+    override val cost: Int = 1
 
     override def getLabel(inst: Instruction): String = {
-      val value = inst.const(instructionSize, 1) == -1
+      val value = inst.const(constantRegionStart, constantRegionSize) == -1
       s"Const ($value)"
     }
 
     override def apply(inst: Instruction, arguments: List[Boolean]): Boolean = {
-      inst.const(instructionSize, 1) == -1
+      inst.const(constantRegionStart, constantRegionSize) == -1
     }
   }
 
@@ -121,10 +123,10 @@ object BooleanFunctions {
     }
 
     def compile(inst: Instruction): AbstractByteCodeGenerator = {
-      List(IAND)
+      IAND
     }
 
-    override def cost: Int = 2
+    override val cost: Int = 2
 
     override def getLabel(inst: Instruction): String = "&"
 
@@ -149,10 +151,10 @@ object BooleanFunctions {
     }
 
     def compile(inst: Instruction): AbstractByteCodeGenerator = {
-      List(IOR)
+      IOR
     }
 
-    override def cost: Int = 2
+    override val cost: Int = 2
 
     override def getLabel(inst: Instruction): String = "|"
 
@@ -182,7 +184,7 @@ object BooleanFunctions {
 
     override val arguments: Int = 1
 
-    override def cost: Int = 2
+    override val cost: Int = 2
 
     override def getLabel(inst: Instruction): String = "~"
 
@@ -209,7 +211,7 @@ object BooleanFunctions {
       List(SWAP, ICONST_1, IXOR, IOR)
     }
 
-    override def cost: Int = 20
+    override val cost: Int = 20
 
     // we want (!a | b) to be cheaper
     override def getLabel(inst: Instruction): String = "->"
@@ -237,10 +239,10 @@ object BooleanFunctions {
     }
 
     def compile(inst: Instruction): AbstractByteCodeGenerator = {
-      List(IXOR)
+      IXOR
     }
 
-    override def cost: Int = 3
+    override val cost: Int = 3
 
     // we want to be cheaper than the equivalent basic gate setup
     override def getLabel(inst: Instruction): String = "^"
@@ -269,7 +271,7 @@ object BooleanFunctions {
       List(IXOR, ICONST_1, IXOR)
     }
 
-    override def cost: Int = 20
+    override val cost: Int = 20
 
     // we want XOR -> NOT to be cheaper
     override def getLabel(inst: Instruction): String = "=="

@@ -48,7 +48,7 @@ object ThreeBitAdder {
 
     import petridish.functions.BooleanFunctions._
 
-    implicit val evolveStrategy = EvolverStrategy(128, 0.005, optimiseForPipeline = false)
+    implicit val evolveStrategy = EvolverStrategy(48, 0.00025, optimiseForPipeline = false)
     implicit val ec = ExecutionContext.fromExecutor( Executors.newFixedThreadPool( Runtime.getRuntime.availableProcessors() ) )
 
     val testCases = TestCases(List(
@@ -90,27 +90,30 @@ object ThreeBitAdder {
           .mkString
           .decodeOption[Program]
       } else None) match {
-        case Some(program: Program) if program.data.length < 4 => program.spread(8).grow(32)
-        case Some(program: Program) if program.data.length < 8 => program.spread(4).grow(32)
-        case Some(program: Program) if program.data.length < 16 => program.spread(2).grow(32)
-        case Some(program: Program) => program.grow(32)
-        case None => Generator(Nop.instructionSize, 32, 3, 2)
+        case Some(program: Program) if program.inputCount == 3 && program.outputCount == 2 =>
+          program.grow(32)
+        case _ =>
+          Generator(Nop.instructionSize, 32, 3, 2)
       }
     }
+    {
+      val solution = function(start, 0, 0)
+      Files.write(Paths.get("solution.dot"), DotGraph(solution).getBytes(StandardCharsets.UTF_8))
+      Files.write(Paths.get("solution.json"), solution.shrink.asJson.toString().getBytes(StandardCharsets.UTF_8))
 
-    val solution = function(Generator(Nop.instructionSize, 32, 3, 2), 0, 0)
-    Files.write(Paths.get("solution.dot"), DotGraph(solution).getBytes(StandardCharsets.UTF_8) )
-    Files.write(Paths.get("solution.json"), solution.shrink.asJson.toString().getBytes(StandardCharsets.UTF_8))
+      val optimised = EvolveUtil.counted(solution.nopInputs.nopOutputs.grow(512), 10000, optimise = true, testCases).shrink.denop.clean
+      Files.write(Paths.get("optimised.dot"), DotGraph(optimised).getBytes(StandardCharsets.UTF_8))
+      Files.write(Paths.get("optimised.json"), optimised.asJson.toString().getBytes(StandardCharsets.UTF_8))
 
-    val optimised = EvolveUtil.counted(solution.nopInputs.nopOutputs.spread(3), 100000, optimise = true, testCases)
-    Files.write(Paths.get("optimised.dot"), DotGraph(optimised).getBytes(StandardCharsets.UTF_8) )
-    Files.write(Paths.get("optimised.json"), optimised.asJson.toString().getBytes(StandardCharsets.UTF_8))
+      val pipelined = optimised.pipeline.deduplicate.pipeline.shrink
+      Files.write(Paths.get("pipelined.dot"), DotGraph(pipelined).getBytes(StandardCharsets.UTF_8))
+      Files.write(Paths.get("pipelined.json"), optimised.asJson.toString().getBytes(StandardCharsets.UTF_8))
 
-    val pipelined = optimised.pipeline.deduplicate.pipeline.shrink
-    Files.write(Paths.get("pipelined.dot"), DotGraph(pipelined).getBytes(StandardCharsets.UTF_8) )
-    Files.write(Paths.get("pipelined.json"), optimised.asJson.toString().getBytes(StandardCharsets.UTF_8))
+      val cf = Compiler.classFile(optimised, "optimised")
+      cf.writeToFile("optimised.class")
+    }
 
-    val cf = Compiler.classFile(optimised, "optimised")
-    cf.writeToFile("optimised.class")
+    System.gc()
+    System.exit(0)
   }
 }

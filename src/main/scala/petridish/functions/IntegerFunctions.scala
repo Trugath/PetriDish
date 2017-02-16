@@ -85,7 +85,7 @@ object IntegerFunctions {
 
     override val arguments: Int = 1
 
-    override def cost: Int = 2
+    override val cost: Int = 2
 
     override def getLabel(inst: Instruction): String = "Nop"
 
@@ -128,15 +128,17 @@ object IntegerFunctions {
 
     override val arguments: Int = 0
 
-    override def cost: Int = 2
+    override val constantRegionSize: Int = 32 - constantRegionStart
+
+    override val cost: Int = 2
 
     override def getLabel(inst: Instruction): String = {
-      val value = inst.const(instructionSize, 32 - instructionSize)
+      val value = inst.const(constantRegionStart, constantRegionSize)
       s"Const ($value)"
     }
 
     override def apply(inst: Instruction, arguments: List[Int]): Int = {
-      inst.const(instructionSize, 32 - instructionSize)
+      inst.const(constantRegionStart, constantRegionSize)
     }
   }
 
@@ -154,10 +156,10 @@ object IntegerFunctions {
     }
 
     def compile(inst: Instruction): AbstractByteCodeGenerator = {
-      List(IADD)
+      IADD
     }
 
-    override def cost: Int = 4
+    override val cost: Int = 4
 
     override def getLabel(inst: Instruction): String = "Add"
 
@@ -182,10 +184,10 @@ object IntegerFunctions {
     }
 
     def compile(inst: Instruction): AbstractByteCodeGenerator = {
-      List(ISUB)
+      ISUB
     }
 
-    override def cost: Int = 4
+    override val cost: Int = 4
 
     override def getLabel(inst: Instruction): String = "Subtract"
 
@@ -212,10 +214,10 @@ object IntegerFunctions {
     }
 
     def compile(inst: Instruction): AbstractByteCodeGenerator = {
-      List(IMUL)
+      IMUL
     }
 
-    override def cost: Int = 5
+    override val cost: Int = 5
 
     override def getLabel(inst: Instruction): String = "Multiply"
 
@@ -244,7 +246,7 @@ object IntegerFunctions {
       List(DUP, IfEq("Zero" + labeler), IDIV, Goto("End" + labeler), Label("Zero" + labeler), SWAP, POP, Label("End" + labeler))
     }
 
-    override def cost: Int = 10
+    override val cost: Int = 10
 
     override def getLabel(inst: Instruction): String = "Divide"
 
@@ -279,7 +281,7 @@ object IntegerFunctions {
       List(DUP, IfEq("Zero" + labeler), IREM, Goto("End" + labeler), Label("Zero" + labeler), SWAP, POP, Label("End" + labeler))
     }
 
-    override def cost: Int = 10
+    override val cost: Int = 10
 
     override def getLabel(inst: Instruction): String = "Modulus"
 
@@ -315,7 +317,7 @@ object IntegerFunctions {
 
     override val arguments: Int = 1
 
-    override def cost: Int = 3
+    override val cost: Int = 3
 
     override def getLabel(inst: Instruction): String = "Increment"
 
@@ -344,7 +346,7 @@ object IntegerFunctions {
 
     override val arguments: Int = 1
 
-    override def cost: Int = 3
+    override val cost: Int = 3
 
     override def getLabel(inst: Instruction): String = "Decrement"
 
@@ -368,10 +370,10 @@ object IntegerFunctions {
     }
 
     def compile(inst: Instruction): AbstractByteCodeGenerator = {
-      List(IAND)
+      IAND
     }
 
-    override def cost: Int = 3
+    override val cost: Int = 3
 
     override def getLabel(inst: Instruction): String = "&"
 
@@ -396,10 +398,10 @@ object IntegerFunctions {
     }
 
     def compile(inst: Instruction): AbstractByteCodeGenerator = {
-      List(IOR)
+      IOR
     }
 
-    override def cost: Int = 3
+    override val cost: Int = 3
 
     override def getLabel(inst: Instruction): String = "|"
 
@@ -424,10 +426,10 @@ object IntegerFunctions {
     }
 
     def compile(inst: Instruction): AbstractByteCodeGenerator = {
-      List(IXOR)
+      IXOR
     }
 
-    override def cost: Int = 3
+    override val cost: Int = 3
 
     override def getLabel(inst: Instruction): String = "^"
 
@@ -457,7 +459,7 @@ object IntegerFunctions {
 
     override val arguments: Int = 1
 
-    override def cost: Int = 3
+    override val cost: Int = 3
 
     override def getLabel(inst: Instruction): String = "~"
 
@@ -481,11 +483,11 @@ object IntegerFunctions {
     }
 
     def compile(inst: Instruction): AbstractByteCodeGenerator = {
-      List(ISHL)
+      ISHL
     }
 
 
-    override def cost: Int = 3
+    override val cost: Int = 3
 
     override def getLabel(inst: Instruction): String = "<<"
 
@@ -512,10 +514,10 @@ object IntegerFunctions {
     }
 
     def compile(inst: Instruction): AbstractByteCodeGenerator = {
-      List(IUSHR)
+      IUSHR
     }
 
-    override def cost: Int = 3
+    override val cost: Int = 3
 
     override def getLabel(inst: Instruction): String = ">>>"
 
@@ -542,10 +544,10 @@ object IntegerFunctions {
     }
 
     def compile(inst: Instruction): AbstractByteCodeGenerator = {
-      List(ISHR)
+      ISHR
     }
 
-    override def cost: Int = 3
+    override val cost: Int = 3
 
     override def getLabel(inst: Instruction): String = ">>"
 
@@ -576,7 +578,7 @@ object IntegerFunctions {
       List(DUP2, If_ICmpGe("Skip" + labeler), SWAP, Label("Skip" + labeler), POP)
     }
 
-    override def cost: Int = 3
+    override val cost: Int = 3
 
     override def getLabel(inst: Instruction): String = "Max"
 
@@ -605,7 +607,7 @@ object IntegerFunctions {
       List(DUP2, If_ICmpLe("Skip" + labeler), SWAP, Label("Skip" + labeler), POP)
     }
 
-    override def cost: Int = 3
+    override val cost: Int = 3
 
     override def getLabel(inst: Instruction): String = "Min"
 
