@@ -126,12 +126,12 @@ object DoubleFunctions {
     override val cost: Int = 2
 
     override def getLabel(inst: Instruction): String = {
-      val value = inst.const(constantRegionSize, constantRegionSize)
+      val value = inst.const(constantRegionStart, constantRegionSize)
       s"Const ($value)"
     }
 
     override def apply(inst: Instruction, arguments: List[Double]): Double = {
-      inst.const(constantRegionSize, constantRegionSize)
+      inst.const(constantRegionStart, constantRegionSize)
     }
   }
 

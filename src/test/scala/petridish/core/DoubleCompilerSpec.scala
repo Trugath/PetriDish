@@ -55,7 +55,7 @@ class DoubleCompilerSpec extends FlatSpec with PropertyChecks with GeneratorDriv
     seed <- Gen.choose[Int](Int.MinValue, Int.MaxValue)
   } yield Generator(Nop.instructionSize, size, 2, 1, seed).shrink
 
-  "Every two input one output integer program" should "function identically" in {
+  "Every two input one output double program" should "function identically" in {
     forAll(twoInputOneOutputDoubleProgramRange) { program: Program =>
       val compiled = Compiler(program)
       forAll { (lvalue: Double, rvalue: Double) =>
@@ -73,7 +73,7 @@ class DoubleCompilerSpec extends FlatSpec with PropertyChecks with GeneratorDriv
     seed <- Gen.choose[Int](Int.MinValue, Int.MaxValue)
   } yield Generator(Nop.instructionSize, size, 3, 1, seed).shrink
 
-  "Every three input one output integer program" should "function identically" in {
+  "Every three input one output double program" should "function identically" in {
     forAll(threeInputOneOutputDoubleProgramRange) { program: Program =>
       val compiled = Compiler(program)
       forAll { (a: Double, b: Double, c: Double) =>
@@ -91,7 +91,7 @@ class DoubleCompilerSpec extends FlatSpec with PropertyChecks with GeneratorDriv
     seed <- Gen.choose[Int](Int.MinValue, Int.MaxValue)
   } yield Generator(Nop.instructionSize, size, 2, 2, seed).shrink
 
-  "Every two input two output integer program" should "function identically" in {
+  "Every two input two output double program" should "function identically" in {
     forAll(twoInputTwoOutputDoubleProgramRange) { program: Program =>
       val compiled = Compiler(program)
       forAll { (lvalue: Double, rvalue: Double) =>
@@ -112,7 +112,7 @@ class DoubleCompilerSpec extends FlatSpec with PropertyChecks with GeneratorDriv
     seed <- Gen.choose[Int](Int.MinValue, Int.MaxValue)
   } yield Generator(Nop.instructionSize, size, 3, 2, seed).shrink
 
-  "Every three input two output integer program" should "function identically" in {
+  "Every three input two output double program" should "function identically" in {
     forAll(threeInputTwoOutputDoubleProgramRange) { program: Program =>
       val compiled = Compiler(program)
       forAll { (a: Double, b: Double, c: Double) =>
