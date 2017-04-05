@@ -52,16 +52,11 @@ object IntegerFunctions {
     Max, Min
   )
 
-  implicit def scoreFunc: (Option[Int], Option[Int]) => Long = (a, b) => {
+  implicit def scoreFunc: (Int, Int) => Long = (a, b) => {
 
-    def nabs(i: Long): Long = if (i < 0) -i else i
+    def nabs(i: Long): Long = if( i < 0 ) -i else i
 
-    val result = (a, b) match {
-      case (Some(left), Some(right)) => nabs(left - right)
-      case (Some(left), None) => left.abs
-      case (None, Some(right)) => right.abs
-      case (None, None) => 0
-    }
+    val result = nabs(a - b)
     assert(result >= 0)
     result * 10
   }
