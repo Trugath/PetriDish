@@ -48,7 +48,7 @@ class IntegerCompilerSpec extends FlatSpec with PropertyChecks with GeneratorDri
     forAll(twoInputOneOutputIntegerProgramRange) { program: Program =>
       val compiled = Compiler(program)
       forAll { (lvalue: Int, rvalue: Int) =>
-        assert(program(List(lvalue, rvalue)).result(1) === compiled.run(lvalue, rvalue))
+        assert(program(List(lvalue, rvalue), 0)._1.result(1) === compiled.run(lvalue, rvalue))
       }
     }
   }
@@ -62,7 +62,7 @@ class IntegerCompilerSpec extends FlatSpec with PropertyChecks with GeneratorDri
     forAll(threeInputOneOutputIntegerProgramRange) { program: Program =>
       val compiled = Compiler(program)
       forAll { (a: Int, b: Int, c: Int) =>
-        assert(program(List(a, b, c)).result(1) === compiled.run(a, b, c))
+        assert(program(List(a, b, c), 0)._1.result(1) === compiled.run(a, b, c))
       }
     }
   }
@@ -76,7 +76,7 @@ class IntegerCompilerSpec extends FlatSpec with PropertyChecks with GeneratorDri
     forAll(twoInputTwoOutputIntegerProgramRange) { program: Program =>
       val compiled = Compiler(program)
       forAll { (lvalue: Int, rvalue: Int) =>
-        assert(program(List(lvalue, rvalue)).result(2) === compiled.run(lvalue, rvalue))
+        assert(program(List(lvalue, rvalue), 0)._1.result(2) === compiled.run(lvalue, rvalue))
       }
     }
   }
@@ -90,7 +90,7 @@ class IntegerCompilerSpec extends FlatSpec with PropertyChecks with GeneratorDri
     forAll(threeInputTwoOutputIntegerProgramRange) { program: Program =>
       val compiled = Compiler(program)
       forAll { (a: Int, b: Int, c: Int) =>
-        assert(program(List(a, b, c)).result(2) === compiled.run(a, b, c))
+        assert(program(List(a, b, c), 0)._1.result(2) === compiled.run(a, b, c))
       }
     }
   }

@@ -42,7 +42,7 @@ object DoubleFunctions {
 
   import Function._
 
-  implicit val functions = Seq[Function[Double]](
+  implicit val functions: Seq[Function[Double]] = Seq[Function[Double]](
     Nop,
     ConstLarge, ConstSmall,
     Add, Subtract, Multiply, Divide, Modulus, Increment, Decrement,
@@ -422,7 +422,7 @@ object DoubleFunctions {
 
     override val cost: Int = 3
 
-    override def getLabel(inst: Instruction): String = "Decrement"
+    override def getLabel(inst: Instruction): String = "SquareRoot"
 
     override def apply(inst: Instruction, arguments: List[Double]): Double = {
       math.sqrt(arguments.head)

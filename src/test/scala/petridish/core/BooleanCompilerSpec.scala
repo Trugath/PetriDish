@@ -51,10 +51,10 @@ class BooleanCompilerSpec extends FlatSpec with PropertyChecks with GeneratorDri
           .pointer(1, And.instructionSize + And.argumentSize, And.argumentSize)
       ), 2, 1)
 
-    assert(booleanAnd(List(false, false)).result(3) === List(false, false, false))
-    assert(booleanAnd(List(false, true)).result(3) === List(false, true, false))
-    assert(booleanAnd(List(true, false)).result(3) === List(true, false, false))
-    assert(booleanAnd(List(true, true)).result(3) === List(true, true, true))
+    assert(booleanAnd(List(false, false), false)._1.result(3) === List(false, false, false))
+    assert(booleanAnd(List(false, true), false)._1.result(3) === List(false, true, false))
+    assert(booleanAnd(List(true, false), false)._1.result(3) === List(true, false, false))
+    assert(booleanAnd(List(true, true), false)._1.result(3) === List(true, true, true))
 
     val prog = Compiler(booleanAnd)
     assert(prog.run(false, false) === List(false))
@@ -81,10 +81,10 @@ class BooleanCompilerSpec extends FlatSpec with PropertyChecks with GeneratorDri
           .pointer(5, Or.instructionSize + Or.argumentSize, Or.argumentSize)
       ), 2, 1)
 
-    assert(booleanAnd(List(false, false)).result(1) === List(false))
-    assert(booleanAnd(List(false, true)).result(1) === List(true))
-    assert(booleanAnd(List(true, false)).result(1) === List(true))
-    assert(booleanAnd(List(true, true)).result(1) === List(false))
+    assert(booleanAnd(List(false, false), false)._1.result(1) === List(false))
+    assert(booleanAnd(List(false, true), false)._1.result(1) === List(true))
+    assert(booleanAnd(List(true, false), false)._1.result(1) === List(true))
+    assert(booleanAnd(List(true, true), false)._1.result(1) === List(false))
 
     val prog = Compiler(booleanAnd)
     assert(prog.run(false, false) === List(false))
@@ -96,28 +96,28 @@ class BooleanCompilerSpec extends FlatSpec with PropertyChecks with GeneratorDri
   "Program(6,Vector(Instruction(335552512), Instruction(67108864), Instruction(335544322), Instruction(335577091), Instruction(40960)),2,1)" should "Compile and function" in {
     val program = Program(6, Vector(Instruction(335552512), Instruction(67108864), Instruction(335544322), Instruction(335577091), Instruction(40960)), 2, 1)
     val compiled = Compiler(program)
-    assert(program(List(false, false)).result(1) === compiled.run(false, false))
-    assert(program(List(false, true)).result(1) === compiled.run(false, true))
-    assert(program(List(true, false)).result(1) === compiled.run(true, false))
-    assert(program(List(true, true)).result(1) === compiled.run(true, true))
+    assert(program(List(false, false), false)._1.result(1) === compiled.run(false, false))
+    assert(program(List(false, true), false)._1.result(1) === compiled.run(false, true))
+    assert(program(List(true, false), false)._1.result(1) === compiled.run(true, false))
+    assert(program(List(true, true), false)._1.result(1) === compiled.run(true, true))
   }
 
   "Program(6,Vector(Instruction(0), Instruction(0), Instruction(134242304), Instruction(134250498), Instruction(201367555)),2,1)" should "Compile and Function" in {
     val program = Program(6, Vector(Instruction(0), Instruction(0), Instruction(134242304), Instruction(134250498), Instruction(201367555)), 2, 1)
     val compiled = Compiler(program)
-    assert(program(List(false, false)).result(1) === compiled.run(false, false))
-    assert(program(List(false, true)).result(1) === compiled.run(false, true))
-    assert(program(List(true, false)).result(1) === compiled.run(true, false))
-    assert(program(List(true, true)).result(1) === compiled.run(true, true))
+    assert(program(List(false, false), false)._1.result(1) === compiled.run(false, false))
+    assert(program(List(false, true), false)._1.result(1) === compiled.run(false, true))
+    assert(program(List(true, false), false)._1.result(1) === compiled.run(true, false))
+    assert(program(List(true, true), false)._1.result(1) === compiled.run(true, true))
   }
 
   "Program(6,Vector(Instruction(67108864), Instruction(67108864), Instruction(67108864), Instruction(134234112), Instruction(469794820), Instruction(402694149), Instruction(134258695), Instruction(201392134), Instruction(402677769)),2,1)" should "Compile and function" in {
     val program = Program(6, Vector(Instruction(67108864), Instruction(67108864), Instruction(67108864), Instruction(134234112), Instruction(469794820), Instruction(402694149), Instruction(134258695), Instruction(201392134), Instruction(402677769)), 2, 1)
     val compiled = Compiler(program)
-    assert(program(List(false, false)).result(1) === compiled.run(false, false))
-    assert(program(List(false, true)).result(1) === compiled.run(false, true))
-    assert(program(List(true, false)).result(1) === compiled.run(true, false))
-    assert(program(List(true, true)).result(1) === compiled.run(true, true))
+    assert(program(List(false, false), false)._1.result(1) === compiled.run(false, false))
+    assert(program(List(false, true), false)._1.result(1) === compiled.run(false, true))
+    assert(program(List(true, false), false)._1.result(1) === compiled.run(true, false))
+    assert(program(List(true, true), false)._1.result(1) === compiled.run(true, true))
   }
 
   val twoInputOneOutputBooleanProgramRange = for {
@@ -128,10 +128,10 @@ class BooleanCompilerSpec extends FlatSpec with PropertyChecks with GeneratorDri
   "Every two input one output boolean program" should "function identically" in {
     forAll(twoInputOneOutputBooleanProgramRange) { program: Program =>
       val compiled = Compiler(program)
-      assert(program(List(false, false)).result(1) === compiled.run(false, false))
-      assert(program(List(false, true)).result(1) === compiled.run(false, true))
-      assert(program(List(true, false)).result(1) === compiled.run(true, false))
-      assert(program(List(true, true)).result(1) === compiled.run(true, true))
+      assert(program(List(false, false), false)._1.result(1) === compiled.run(false, false))
+      assert(program(List(false, true), false)._1.result(1) === compiled.run(false, true))
+      assert(program(List(true, false), false)._1.result(1) === compiled.run(true, false))
+      assert(program(List(true, true), false)._1.result(1) === compiled.run(true, true))
     }
   }
 
@@ -143,14 +143,14 @@ class BooleanCompilerSpec extends FlatSpec with PropertyChecks with GeneratorDri
   "Every three input one output boolean program" should "function identically" in {
     forAll(threeInputOneOutputBooleanProgramRange) { program: Program =>
       val compiled = Compiler(program)
-      assert(program(List(false, false, false)).result(1) === compiled.run(false, false, false))
-      assert(program(List(false, false, true)).result(1) === compiled.run(false, false, true))
-      assert(program(List(false, true, false)).result(1) === compiled.run(false, true, false))
-      assert(program(List(false, true, true)).result(1) === compiled.run(false, true, true))
-      assert(program(List(true, false, false)).result(1) === compiled.run(true, false, false))
-      assert(program(List(true, false, true)).result(1) === compiled.run(true, false, true))
-      assert(program(List(true, true, false)).result(1) === compiled.run(true, true, false))
-      assert(program(List(true, true, true)).result(1) === compiled.run(true, true, true))
+      assert(program(List(false, false, false), false)._1.result(1) === compiled.run(false, false, false))
+      assert(program(List(false, false, true), false)._1.result(1) === compiled.run(false, false, true))
+      assert(program(List(false, true, false), false)._1.result(1) === compiled.run(false, true, false))
+      assert(program(List(false, true, true), false)._1.result(1) === compiled.run(false, true, true))
+      assert(program(List(true, false, false), false)._1.result(1) === compiled.run(true, false, false))
+      assert(program(List(true, false, true), false)._1.result(1) === compiled.run(true, false, true))
+      assert(program(List(true, true, false), false)._1.result(1) === compiled.run(true, true, false))
+      assert(program(List(true, true, true), false)._1.result(1) === compiled.run(true, true, true))
     }
   }
 
@@ -163,10 +163,10 @@ class BooleanCompilerSpec extends FlatSpec with PropertyChecks with GeneratorDri
   "Every two input two output boolean program" should "function identically" in {
     forAll(twoInputTwoOutputBooleanProgramRange) { program: Program =>
       val compiled = Compiler(program)
-      assert(program(List(false, false)).result(2) === compiled.run(false, false))
-      assert(program(List(false, true)).result(2) === compiled.run(false, true))
-      assert(program(List(true, false)).result(2) === compiled.run(true, false))
-      assert(program(List(true, true)).result(2) === compiled.run(true, true))
+      assert(program(List(false, false), false)._1.result(2) === compiled.run(false, false))
+      assert(program(List(false, true), false)._1.result(2) === compiled.run(false, true))
+      assert(program(List(true, false), false)._1.result(2) === compiled.run(true, false))
+      assert(program(List(true, true), false)._1.result(2) === compiled.run(true, true))
     }
   }
 
@@ -178,14 +178,14 @@ class BooleanCompilerSpec extends FlatSpec with PropertyChecks with GeneratorDri
   "Every three input two output boolean program" should "function identically" in {
     forAll(threeInputTwoOutputBooleanProgramRange) { program: Program =>
       val compiled = Compiler(program)
-      assert(program(List(false, false, false)).result(2) === compiled.run(false, false, false))
-      assert(program(List(false, false, true)).result(2) === compiled.run(false, false, true))
-      assert(program(List(false, true, false)).result(2) === compiled.run(false, true, false))
-      assert(program(List(false, true, true)).result(2) === compiled.run(false, true, true))
-      assert(program(List(true, false, false)).result(2) === compiled.run(true, false, false))
-      assert(program(List(true, false, true)).result(2) === compiled.run(true, false, true))
-      assert(program(List(true, true, false)).result(2) === compiled.run(true, true, false))
-      assert(program(List(true, true, true)).result(2) === compiled.run(true, true, true))
+      assert(program(List(false, false, false), false)._1.result(2) === compiled.run(false, false, false))
+      assert(program(List(false, false, true), false)._1.result(2) === compiled.run(false, false, true))
+      assert(program(List(false, true, false), false)._1.result(2) === compiled.run(false, true, false))
+      assert(program(List(false, true, true), false)._1.result(2) === compiled.run(false, true, true))
+      assert(program(List(true, false, false), false)._1.result(2) === compiled.run(true, false, false))
+      assert(program(List(true, false, true), false)._1.result(2) === compiled.run(true, false, true))
+      assert(program(List(true, true, false), false)._1.result(2) === compiled.run(true, true, false))
+      assert(program(List(true, true, true), false)._1.result(2) === compiled.run(true, true, true))
     }
   }
 }

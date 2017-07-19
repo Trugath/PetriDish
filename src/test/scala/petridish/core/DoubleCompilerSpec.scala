@@ -43,7 +43,7 @@ class DoubleCompilerSpec extends FlatSpec with PropertyChecks with GeneratorDriv
     val program = Program(6, Vector(Instruction(134217728), Instruction(67108864), Instruction(201326594), Instruction(268460033), Instruction(32768), Instruction(536920064), Instruction(536903680), Instruction(268500999), Instruction(536911872), Instruction(402735113)), 2, 1)
     val compiled = Compiler(program)
     forAll { (lvalue: Double, rvalue: Double) =>
-      val target: Double = program(List(lvalue, rvalue)).result(1).head
+      val target: Double = program(List(lvalue, rvalue), 0.0)._1.result(1).head
       val result: Double = compiled.run(lvalue, rvalue).asInstanceOf[Array[Double]].head
       if (!target.isNaN && !result.isNaN) {
         assert(target === result)
@@ -59,7 +59,7 @@ class DoubleCompilerSpec extends FlatSpec with PropertyChecks with GeneratorDriv
     forAll(twoInputOneOutputDoubleProgramRange) { program: Program =>
       val compiled = Compiler(program)
       forAll { (lvalue: Double, rvalue: Double) =>
-        val target: Double = program(List(lvalue, rvalue)).result(1).head
+        val target: Double = program(List(lvalue, rvalue), 0.0)._1.result(1).head
         val result: Double = compiled.run(lvalue, rvalue).asInstanceOf[Array[Double]].head
         if (!target.isNaN && !result.isNaN) {
           assert(target === result)
@@ -77,7 +77,7 @@ class DoubleCompilerSpec extends FlatSpec with PropertyChecks with GeneratorDriv
     forAll(threeInputOneOutputDoubleProgramRange) { program: Program =>
       val compiled = Compiler(program)
       forAll { (a: Double, b: Double, c: Double) =>
-        val target: Double = program(List(a, b, c)).result(1).head
+        val target: Double = program(List(a, b, c), 0.0)._1.result(1).head
         val result: Double = compiled.run(a, b, c).asInstanceOf[Array[Double]].head
         if (!target.isNaN && !result.isNaN) {
           assert(target === result)
@@ -95,7 +95,7 @@ class DoubleCompilerSpec extends FlatSpec with PropertyChecks with GeneratorDriv
     forAll(twoInputTwoOutputDoubleProgramRange) { program: Program =>
       val compiled = Compiler(program)
       forAll { (lvalue: Double, rvalue: Double) =>
-        val target = program(List(lvalue, rvalue)).result(2)
+        val target = program(List(lvalue, rvalue), 0.0)._1.result(2)
         val result = compiled.run(lvalue, rvalue).asInstanceOf[Array[Double]]
         (target zip result).foreach {
           case (a, b) =>
@@ -116,7 +116,7 @@ class DoubleCompilerSpec extends FlatSpec with PropertyChecks with GeneratorDriv
     forAll(threeInputTwoOutputDoubleProgramRange) { program: Program =>
       val compiled = Compiler(program)
       forAll { (a: Double, b: Double, c: Double) =>
-        val target = program(List(a, b, c)).result(2)
+        val target = program(List(a, b, c), 0.0)._1.result(2)
         val result = compiled.run(a, b, c).asInstanceOf[Array[Double]]
         (target zip result).foreach {
           case (a, b) =>

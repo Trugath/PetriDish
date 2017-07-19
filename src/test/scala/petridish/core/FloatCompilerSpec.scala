@@ -48,7 +48,7 @@ class FloatCompilerSpec extends FlatSpec with PropertyChecks with GeneratorDrive
     forAll(twoInputOneOutputFloatProgramRange) { program: Program =>
       val compiled = Compiler(program)
       forAll { (lvalue: Float, rvalue: Float) =>
-        val target: Float = program(List(lvalue, rvalue)).result(1).head
+        val target: Float = program(List(lvalue, rvalue), 0f)._1.result(1).head
         val result: Float = compiled.run(lvalue, rvalue).asInstanceOf[Array[Float]].head
         if (!target.isNaN && !result.isNaN) {
           assert(target === result)
@@ -66,7 +66,7 @@ class FloatCompilerSpec extends FlatSpec with PropertyChecks with GeneratorDrive
     forAll(threeInputOneOutputFloatProgramRange) { program: Program =>
       val compiled = Compiler(program)
       forAll { (a: Float, b: Float, c: Float) =>
-        val target: Float = program(List(a, b, c)).result(1).head
+        val target: Float = program(List(a, b, c), 0f)._1.result(1).head
         val result: Float = compiled.run(a, b, c).asInstanceOf[Array[Float]].head
         if (!target.isNaN && !result.isNaN) {
           assert(target === result)
@@ -84,7 +84,7 @@ class FloatCompilerSpec extends FlatSpec with PropertyChecks with GeneratorDrive
     forAll(twoInputTwoOutputFloatProgramRange) { program: Program =>
       val compiled = Compiler(program)
       forAll { (lvalue: Float, rvalue: Float) =>
-        val target = program(List(lvalue, rvalue)).result(2)
+        val target = program(List(lvalue, rvalue), 0f)._1.result(2)
         val result = compiled.run(lvalue, rvalue).asInstanceOf[Array[Float]]
         (target zip result).foreach {
           case (a, b) =>
@@ -105,7 +105,7 @@ class FloatCompilerSpec extends FlatSpec with PropertyChecks with GeneratorDrive
     forAll(threeInputTwoOutputFloatProgramRange) { program: Program =>
       val compiled = Compiler(program)
       forAll { (a: Float, b: Float, c: Float) =>
-        val target = program(List(a, b, c)).result(2)
+        val target = program(List(a, b, c), 0f)._1.result(2)
         val result = compiled.run(a, b, c).asInstanceOf[Array[Float]]
         (target zip result).foreach {
           case (a, b) =>
